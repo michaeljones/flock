@@ -1,0 +1,119 @@
+// Note: Colour requires 4 values. RGBA
+
+BeginFlocks
+
+StartFlock 5 10 0 0 10
+
+FlockColour 1 0 0 1 
+
+FoodChain 1
+
+MaxVelocity 10
+MinVelocity 3
+MaxAcceleration 20
+
+MaxHunt 100
+ScaleHunt 100
+MaxFlee 10
+ScaleFlee 10
+
+FleeTestRadius 0
+
+MaxCollisionAvoidance 30
+MaxVelocityMatching 0
+MaxGoalCentring 0
+MaxLocalFlockCentring 0
+MaxGlobalFlockCentring 0
+MaxObjectAvoidance 0
+
+ScaleCollisionAvoidance 30
+ScaleVelocityMatching 0
+ScaleGoalCentring 0
+ScaleLocalFlockCentring 0
+ScaleGlobalFlockCentring 0
+ScaleObjectAvoidance 0
+
+BoidTestRadius 5
+ObjectTestRadius 10
+
+EndFlock
+
+
+
+StartFlock 30 -20 0 0 10
+
+FlockColour 0 0 1 1 
+
+FoodChain 0
+
+MaxVelocity 5
+MinVelocity 3
+MaxAcceleration 6
+
+MaxHunt 0
+ScaleHunt 0
+MaxFlee 10
+ScaleFlee 100
+
+FleeTestRadius 10
+
+MaxCollisionAvoidance 5
+MaxVelocityMatching 0
+MaxGoalCentring 10
+MaxLocalFlockCentring 0
+MaxGlobalFlockCentring 0
+MaxObjectAvoidance 0
+
+ScaleCollisionAvoidance 5
+ScaleVelocityMatching 0
+ScaleGoalCentring 6
+ScaleLocalFlockCentring 0
+ScaleGlobalFlockCentring 0
+ScaleObjectAvoidance 0
+
+BoidTestRadius 5
+ObjectTestRadius 10
+
+EndFlock
+
+
+StartFlock 5 20 0 0 10
+
+FlockColour 0 1 0 1 
+
+FoodChain 2
+
+MaxVelocity 10
+MinVelocity 3
+MaxAcceleration 10
+
+MaxHunt 10
+ScaleHunt 10
+MaxFlee 0
+ScaleFlee 0
+
+FleeTestRadius 0
+
+MaxCollisionAvoidance 20
+MaxVelocityMatching 0
+MaxGoalCentring 0
+MaxLocalFlockCentring 0
+MaxGlobalFlockCentring 0
+MaxObjectAvoidance 0
+
+ScaleCollisionAvoidance 20
+ScaleVelocityMatching 0
+ScaleGoalCentring 0
+ScaleLocalFlockCentring 0
+ScaleGlobalFlockCentring 0
+ScaleObjectAvoidance 0
+
+BoidTestRadius 5
+ObjectTestRadius 10
+
+EndFlock
+
+
+EndFlocks
+
+

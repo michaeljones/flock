@@ -1,0 +1,41 @@
+// Note: Colour requires 4 values. RGBA
+
+BeginFlocks
+
+StartFlock 10 20 0 0 5
+
+FlockColour 1 1 0 1 
+
+FoodChain 1
+
+BankingScale 5
+BankingDepth 20
+
+MaxVelocity 6
+MinVelocity 1
+MaxAcceleration 4
+
+MaxCollisionAvoidance 50
+MaxVelocityMatching 10
+MaxGoalCentring 100
+MaxLocalFlockCentring 0
+MaxGlobalFlockCentring 0
+MaxObjectAvoidance 120
+
+ScaleCollisionAvoidance 50
+ScaleVelocityMatching 1
+ScaleGoalCentring 50
+ScaleLocalFlockCentring 10
+ScaleGlobalFlockCentring 10
+ScaleObjectAvoidance 130
+
+BoidTestRadius 5
+ObjectTestRadius 6
+
+EndFlock
+
+
+
+EndFlocks
+
+

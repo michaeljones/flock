@@ -17,6 +17,7 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <cstdlib>
 
 // Custom classes
 #include "Flock.h"
@@ -26,28 +27,16 @@
 #include "Object.h"
 #include "Particle.h"
 
-// Graphics Library - Jon Macey
-#include "GraphicsLib.h"
-
 // OpenGl and Glut includes for Linux and Mac (Darwin)
-#ifdef LINUX
-	#include <GL/gl.h>
-	#include <GL/glu.h>
-#endif
-#ifdef DARWIN
-	#include <OpenGL/gl.h>
-	#include <OpenGL/glu.h>
-#endif
-
-// Graphics Library namspace
-using namespace GraphicsLib;
-using namespace std;
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glut.h>
 
 // Escape key defined for use in keyboard function
 #define ESCAPE 27
 
-typedef vector<Boid*>::iterator BoidIt;
-typedef vector<Flock*>::iterator FlockIt;
+typedef std::vector< Boid* >::iterator BoidIt;
+typedef std::vector< Flock* >::iterator FlockIt;
 
 
 // Screen Dimensions
@@ -64,24 +53,24 @@ int frame = 0;
 World container;
 
 // Vector containers for the Flocks and Boids used in the system
-vector<Flock*> flocks;
-vector<Boid*> boids;
+std::vector<Flock*> flocks;
+std::vector<Boid*> boids;
 	
-CurveFollow *targetCurve;
-Goal target(container);
+// CurveFollow *targetCurve;
+// Goal target(container);
 
-vector<Object*> objects;
+std::vector<Object*> objects;
 
-// Camera
-Camera Cam;
-enum CAMMODE{MOVEEYE,MOVELOOK,MOVEBOTH,MOVESLIDE};
-int CamMode=MOVESLIDE;
-
-int spinxface = 0 ;
-int spinyface = 0 ;
-int spinzface = 0 ;
-int origx, origy, origz, RotateXY, RotateXZ=0;
-int Rotate;
+// 
+//  Cam;
+// enum CAMMODE{MOVEEYE,MOVELOOK,MOVEBOTH,MOVESLIDE};
+// int CamMode=MOVESLIDE;
+// 
+// int spinxface = 0 ;
+// int spinyface = 0 ;
+// int spinzface = 0 ;
+// int origx, origy, origz, RotateXY, RotateXZ=0;
+// int Rotate;
 
 
 /* Display:
@@ -96,19 +85,19 @@ void Display()
 	// turn on the lights
 	glPushMatrix();
 		//rotate the global scene based on the mouse rotations
-		glRotated ((GLdouble) spinxface, 1.0, 0.0, 0.0);
-		glRotated ((GLdouble) spinyface, 0.0, 1.0, 0.0);
-		glRotated ((GLdouble) spinzface, 0.0, 0.0, 1.0);
+		// glRotated ((GLdouble) spinxface, 1.0, 0.0, 0.0);
+		// glRotated ((GLdouble) spinyface, 0.0, 1.0, 0.0);
+		// glRotated ((GLdouble) spinzface, 0.0, 0.0, 1.0);
 		// create pointers to the begining and end of the particle list
 	
 		// DrawAxis(8);
 
-		target.Draw();
+		// target.Draw();
 		container.DrawGround();
-		targetCurve->DrawCurve();
+		// targetCurve->DrawCurve();
 		
-		vector<Object*>::iterator currentObject = objects.begin();
-		vector<Object*>::iterator endObject = objects.end();
+		std::vector<Object*>::iterator currentObject = objects.begin();
+		std::vector<Object*>::iterator endObject = objects.end();
 	
 		// Cycle through all the flocks and call the draw methods for each one
 		while(currentObject != endObject)
@@ -117,8 +106,8 @@ void Display()
 			++currentObject;
 		}
 
-		vector<Flock*>::iterator currentFlock = flocks.begin();
-		vector<Flock*>::iterator endFlock = flocks.end();
+		std::vector<Flock*>::iterator currentFlock = flocks.begin();
+		std::vector<Flock*>::iterator endFlock = flocks.end();
 	
 		// Cycle through all the flocks and call the draw methods for each one
 		while(currentFlock != endFlock)
@@ -138,18 +127,19 @@ void Display()
 */
 void Update(int i)
 {
-	vector<Flock*>::iterator currentFlock = flocks.begin();
-	vector<Flock*>::iterator endFlock = flocks.end();
+	std::vector<Flock*>::iterator currentFlock = flocks.begin();
+	std::vector<Flock*>::iterator endFlock = flocks.end();
 
 	if(!Pause) {
 
-		target.Update();
+		// target.Update();
 		
 		//Cycle through the flocks calling the appropriate behaviours and finally the Update method.
 		while(currentFlock != endFlock)
 		{
-			(*currentFlock)->Update(target.Pos);
-			(*currentFlock)->OBJExport(frame);
+			Imath::V3f centre( 0.0, 0.0, 0.0 );
+			(*currentFlock)->Update( centre );
+			// (*currentFlock)->OBJExport(frame);
 			++currentFlock;
 			
 		}
@@ -192,8 +182,8 @@ void CreateObject(float x, float y, float z)
 */
 void cleanup() {
 	{
-		vector<Boid*>::iterator itBoid = boids.begin();
-		vector<Boid*>::iterator endBoid = boids.end();
+		std::vector<Boid*>::iterator itBoid = boids.begin();
+		std::vector<Boid*>::iterator endBoid = boids.end();
 		for(; itBoid != endBoid; ++itBoid)
 		{
 			delete (*itBoid);
@@ -201,11 +191,11 @@ void cleanup() {
 		boids.clear();
 	}
 	{
-		vector<Flock*>::iterator itFlock = flocks.begin();
-		vector<Flock*>::iterator endFlock = flocks.end();
+		std::vector<Flock*>::iterator itFlock = flocks.begin();
+		std::vector<Flock*>::iterator endFlock = flocks.end();
 		
-		vector<Particle*>::iterator itPart;
-		vector<Particle*>::iterator endPart;
+		std::vector<Particle*>::iterator itPart;
+		std::vector<Particle*>::iterator endPart;
 		
 		for(; itFlock != endFlock; ++itFlock)
 		{
@@ -232,16 +222,16 @@ void cleanup() {
 */
 void SetTargetPath()
 {
-	Point3 targetPath[4];
-	
-	targetPath[0].set(-40,0,-15);
-	targetPath[1].set(-20,5,0);
-	targetPath[2].set(20,-5,0);
-	targetPath[3].set(40,0,15);
-	
-	targetCurve = new CurveFollow(targetPath);
-	
-	target.setCurve(*targetCurve);
+	// Point3 targetPath[4];
+	// 
+	// targetPath[0].set(-40,0,-15);
+	// targetPath[1].set(-20,5,0);
+	// targetPath[2].set(20,-5,0);
+	// targetPath[3].set(40,0,15);
+	// 
+	// targetCurve = new CurveFollow(targetPath);
+	// 
+	// target.setCurve(*targetCurve);
 }
 
 
@@ -263,8 +253,8 @@ void CreateFlock(int flockID, int numBoids, double x, double y, double z, double
 		boids.push_back(newBoid);
 	}
 
-	vector<Boid*>::iterator currentBoid = boids.begin();
-	vector<Boid*>::iterator endBoid = boids.end();
+	std::vector<Boid*>::iterator currentBoid = boids.begin();
+	std::vector<Boid*>::iterator endBoid = boids.end();
 		
 	while(currentBoid != endBoid)
 	{
@@ -288,8 +278,8 @@ void CreateFlock(int flockID, int numBoids, double x, double y, double z, double
 void CompleteFlocks()
 {
 
-	vector<Object*>::iterator currentObject = objects.begin();
-	vector<Object*>::iterator endObject = objects.end();
+	std::vector<Object*>::iterator currentObject = objects.begin();
+	std::vector<Object*>::iterator endObject = objects.end();
 	
 	while(currentObject != endObject)
 	{
@@ -316,14 +306,14 @@ C++ Programming HOW-TO
 Al Dev (Alavoor Vasudevan) alavoor[AT]yahoo.com
 v42.9, 17 Sep 2002
 */
-void Tokenize(const string& str,vector<string>& tokens,const string& delimiters = " ")
+void Tokenize(const std::string& str, std::vector< std::string >& tokens, const std::string& delimiters = " ")
 {
 	// Skip delimiters at beginning.
-	string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+	std::string::size_type lastPos = str.find_first_not_of(delimiters, 0);
 	// Find first "non-delimiter".
-	string::size_type pos     = str.find_first_of(delimiters, lastPos);
+	std::string::size_type pos = str.find_first_of(delimiters, lastPos);
 
-	while (string::npos != pos || string::npos != lastPos)
+	while( std::string::npos != pos || std::string::npos != lastPos)
 	{
 		// Found a token, add it to the vector.
 		tokens.push_back(str.substr(lastPos, pos - lastPos));
@@ -340,15 +330,15 @@ void Tokenize(const string& str,vector<string>& tokens,const string& delimiters 
 */
 bool ParseConfigFile()
 {
-	fstream FileIn;
-	vector<string> tokens;
+	std::fstream FileIn;
+	std::vector< std::string > tokens;
 	
 	// open the file and check to see if it was ok
-	FileIn.open(Filename.c_str(),ios::in);
+	FileIn.open(Filename.c_str(), std::ios::in);
 
 	if (!FileIn.is_open())
 	{
-		cout <<"File Not Found"<<endl;
+		std::cout <<"File Not Found"<<std::endl;
 		return false;
 	}
 
@@ -356,7 +346,7 @@ bool ParseConfigFile()
 	Flock *lastFlock = NULL;
 	
 	// this is the buffer which holds the current line from the file
-	string LineBuffer;
+	std::string LineBuffer;
 	// now loop till end of the file and parse
 	while(!FileIn.eof())
 	{
@@ -372,13 +362,13 @@ bool ParseConfigFile()
 			Tokenize(LineBuffer, tokens," \t\n");	
 	
 			// now check for the entries to parse using ==
-			// look for the Camera
+			// look for the 
 			if(tokens[0] == "BeginFlocks") { continue; }
 			else if(tokens[0] == "StartFlock")
 			{
 				if(atoi(tokens[1].c_str()) == 0)
 				{
-					cout << "Error: Flock of zero size has been specified. Please specify a non-zero size." << endl;
+					std::cout << "Error: Flock of zero size has been specified. Please specify a non-zero size." << std::endl;
 					cleanup();
 					exit(0);
 				}
@@ -458,7 +448,7 @@ bool ParseConfigFile()
 
 			else 
 			{ 
-				cout <<"Unknown token "<<tokens[0]<<endl;
+				std::cout <<"Unknown token "<<tokens[0]<<std::endl;
 			}
 		}
 	}
@@ -473,39 +463,39 @@ bool ParseConfigFile()
 
 void MouseButton(int button, int down, int x, int y) 
 {
-	Rotate = 0;
-	switch(button)
-	{
-		case GLUT_LEFT_BUTTON:
-			if (down == GLUT_DOWN)
-			{
-				origx = x;
-				origy = y;
-				Rotate = 1;
-			}
-			else Rotate = 0;
-		break;
-	}
+	// Rotate = 0;
+	// switch(button)
+	// {
+	// 	case GLUT_LEFT_BUTTON:
+	// 		if (down == GLUT_DOWN)
+	// 		{
+	// 			origx = x;
+	// 			origy = y;
+	// 			Rotate = 1;
+	// 		}
+	// 		else Rotate = 0;
+	// 	break;
+	// }
 }
 
 void MouseMotion(int x, int y) 
 {
-	if(Rotate) {
-		spinyface = ( spinyface + (x - origx) ) % 360 ;
-		spinxface = ( spinxface + (y - origy) ) % 360 ;
-		origx = x;
-		origy = y;
-		glutPostRedisplay();
-	}
+	// if(Rotate) {
+	// 	spinyface = ( spinyface + (x - origx) ) % 360 ;
+	// 	spinxface = ( spinxface + (y - origy) ) % 360 ;
+	// 	origx = x;
+	// 	origy = y;
+	// 	glutPostRedisplay();
+	// }
 }
 
 void Keyboard(unsigned char ch, int x, int y) 
 {
-	vector<Flock*>::iterator currentFlock = flocks.begin();
-	vector<Flock*>::iterator endFlock = flocks.end();
+	std::vector<Flock*>::iterator currentFlock = flocks.begin();
+	std::vector<Flock*>::iterator endFlock = flocks.end();
 
-	vector<Boid*>::iterator currentBoid= boids.begin();
-	vector<Boid*>::iterator endBoid = boids.end();
+	std::vector<Boid*>::iterator currentBoid= boids.begin();
+	std::vector<Boid*>::iterator endBoid = boids.end();
 
 	switch(ch)
 	{
@@ -537,127 +527,127 @@ void Keyboard(unsigned char ch, int x, int y)
 			
 		break;
 		
-		case 'd' : CamMode=MOVESLIDE; break;
-		case 'e' : CamMode=MOVEEYE; break;
-		case 'l' : CamMode=MOVELOOK; break;
-		case 'b' : CamMode=MOVEBOTH; break;
+		// case 'd' : CamMode=MOVESLIDE; break;
+		// case 'e' : CamMode=MOVEEYE; break;
+		// case 'l' : CamMode=MOVELOOK; break;
+		// case 'b' : CamMode=MOVEBOTH; break;
 		}
 }
 
 void SpecialKey(int key, int x, int y) 
 {
-	switch(CamMode)
-	{
-	case MOVESLIDE :
-		switch (key)
-		{
-		// slide the camera left right up and down
-		case GLUT_KEY_LEFT	:
-			Cam.slide(0.1,0.0,0.0);
-		break;
-		case GLUT_KEY_UP	:
-			Cam.slide(0.0,0.1,0.0);
-		break;
-		case GLUT_KEY_RIGHT	:
-			Cam.slide(-0.1,0.0,0.0);
-		break;
-		case GLUT_KEY_DOWN	:
-			Cam.slide(0.0,-0.1,0.0);
-		break;
-		//slide the camera along the z axis
-		case GLUT_KEY_PAGE_UP	:
-			Cam.slide(0.0,0.0,0.1);
-			break;
-		case GLUT_KEY_PAGE_DOWN	:
-			Cam.slide(0.0,0.0,-0.1);
-			break;
-		
-		}
-	break;
-	
-	case MOVEEYE :
-		switch (key)
-		{
-		// slide the camera left right up and down
-		case GLUT_KEY_LEFT	:
-			Cam.moveEye(0.1,0.0,0.0);
-		break;
-		case GLUT_KEY_UP	:
-			Cam.moveEye(0.0,0.1,0.0);
-		break;
-		case GLUT_KEY_RIGHT	:
-			Cam.moveEye(-0.1,0.0,0.0);
-		break;
-		case GLUT_KEY_DOWN	:
-			Cam.moveEye(0.0,-0.1,0.0);
-		break;
-		//slide the camera along the z axis
-		case GLUT_KEY_PAGE_UP	:
-			Cam.moveEye(0.0,0.0,0.1);
-			break;
-		case GLUT_KEY_PAGE_DOWN	:
-			Cam.moveEye(0.0,0.0,-0.1);
-			break;
-	
-		}
-	break;
-	
-	case MOVELOOK :
-		switch (key)
-		{
-		// slide the camera left right up and down
-		case GLUT_KEY_LEFT	:
-			Cam.moveLook(0.1,0.0,0.0);
-		break;
-		case GLUT_KEY_UP	:
-			Cam.moveLook(0.0,0.1,0.0);
-		break;
-		case GLUT_KEY_RIGHT	:
-			Cam.moveLook(-0.1,0.0,0.0);
-		break;
-		case GLUT_KEY_DOWN	:
-			Cam.moveLook(0.0,-0.1,0.0);
-		break;
-		//slide the camera along the z axis
-		case GLUT_KEY_PAGE_UP	:
-			Cam.moveLook(0.0,0.0,0.1);
-			break;
-		case GLUT_KEY_PAGE_DOWN	:
-			Cam.moveLook(0.0,0.0,-0.1);
-			break;
-		
-		}
-	break;
-	
-	case MOVEBOTH :
-		switch (key)
-		{
-		// slide the camera left right up and down
-		case GLUT_KEY_LEFT	:
-			Cam.moveBoth(0.1,0.0,0.0);
-		break;
-		case GLUT_KEY_UP	:
-			Cam.moveBoth(0.0,0.1,0.0);
-		break;
-		case GLUT_KEY_RIGHT	:
-			Cam.moveBoth(-0.1,0.0,0.0);
-		break;
-		case GLUT_KEY_DOWN	:
-			Cam.moveBoth(0.0,-0.1,0.0);
-		break;
-		//slide the camera along the z axis
-		case GLUT_KEY_PAGE_UP	:
-			Cam.moveBoth(0.0,0.0,0.1);
-			break;
-		case GLUT_KEY_PAGE_DOWN	:
-			Cam.moveBoth(0.0,0.0,-0.1);
-			break;
-		
-		}
-	break;
-	
-	
-	}
+	// switch(CamMode)
+	// {
+	// case MOVESLIDE :
+	// 	switch (key)
+	// 	{
+	// 	// slide the camera left right up and down
+	// 	case GLUT_KEY_LEFT	:
+	// 		Cam.slide(0.1,0.0,0.0);
+	// 	break;
+	// 	case GLUT_KEY_UP	:
+	// 		Cam.slide(0.0,0.1,0.0);
+	// 	break;
+	// 	case GLUT_KEY_RIGHT	:
+	// 		Cam.slide(-0.1,0.0,0.0);
+	// 	break;
+	// 	case GLUT_KEY_DOWN	:
+	// 		Cam.slide(0.0,-0.1,0.0);
+	// 	break;
+	// 	//slide the camera along the z axis
+	// 	case GLUT_KEY_PAGE_UP	:
+	// 		Cam.slide(0.0,0.0,0.1);
+	// 		break;
+	// 	case GLUT_KEY_PAGE_DOWN	:
+	// 		Cam.slide(0.0,0.0,-0.1);
+	// 		break;
+	// 	
+	// 	}
+	// break;
+	// 
+	// case MOVEEYE :
+	// 	switch (key)
+	// 	{
+	// 	// slide the camera left right up and down
+	// 	case GLUT_KEY_LEFT	:
+	// 		Cam.moveEye(0.1,0.0,0.0);
+	// 	break;
+	// 	case GLUT_KEY_UP	:
+	// 		Cam.moveEye(0.0,0.1,0.0);
+	// 	break;
+	// 	case GLUT_KEY_RIGHT	:
+	// 		Cam.moveEye(-0.1,0.0,0.0);
+	// 	break;
+	// 	case GLUT_KEY_DOWN	:
+	// 		Cam.moveEye(0.0,-0.1,0.0);
+	// 	break;
+	// 	//slide the camera along the z axis
+	// 	case GLUT_KEY_PAGE_UP	:
+	// 		Cam.moveEye(0.0,0.0,0.1);
+	// 		break;
+	// 	case GLUT_KEY_PAGE_DOWN	:
+	// 		Cam.moveEye(0.0,0.0,-0.1);
+	// 		break;
+	// 
+	// 	}
+	// break;
+	// 
+	// case MOVELOOK :
+	// 	switch (key)
+	// 	{
+	// 	// slide the camera left right up and down
+	// 	case GLUT_KEY_LEFT	:
+	// 		Cam.moveLook(0.1,0.0,0.0);
+	// 	break;
+	// 	case GLUT_KEY_UP	:
+	// 		Cam.moveLook(0.0,0.1,0.0);
+	// 	break;
+	// 	case GLUT_KEY_RIGHT	:
+	// 		Cam.moveLook(-0.1,0.0,0.0);
+	// 	break;
+	// 	case GLUT_KEY_DOWN	:
+	// 		Cam.moveLook(0.0,-0.1,0.0);
+	// 	break;
+	// 	//slide the camera along the z axis
+	// 	case GLUT_KEY_PAGE_UP	:
+	// 		Cam.moveLook(0.0,0.0,0.1);
+	// 		break;
+	// 	case GLUT_KEY_PAGE_DOWN	:
+	// 		Cam.moveLook(0.0,0.0,-0.1);
+	// 		break;
+	// 	
+	// 	}
+	// break;
+	// 
+	// case MOVEBOTH :
+	// 	switch (key)
+	// 	{
+	// 	// slide the camera left right up and down
+	// 	case GLUT_KEY_LEFT	:
+	// 		Cam.moveBoth(0.1,0.0,0.0);
+	// 	break;
+	// 	case GLUT_KEY_UP	:
+	// 		Cam.moveBoth(0.0,0.1,0.0);
+	// 	break;
+	// 	case GLUT_KEY_RIGHT	:
+	// 		Cam.moveBoth(-0.1,0.0,0.0);
+	// 	break;
+	// 	case GLUT_KEY_DOWN	:
+	// 		Cam.moveBoth(0.0,-0.1,0.0);
+	// 	break;
+	// 	//slide the camera along the z axis
+	// 	case GLUT_KEY_PAGE_UP	:
+	// 		Cam.moveBoth(0.0,0.0,0.1);
+	// 		break;
+	// 	case GLUT_KEY_PAGE_DOWN	:
+	// 		Cam.moveBoth(0.0,0.0,-0.1);
+	// 		break;
+	// 	
+	// 	}
+	// break;
+	// 
+	// 
+	// }
 }
 
 
@@ -673,12 +663,12 @@ void InitialiseGL()
 	// set the ambient colour to dark grey
 	GLfloat AmbColour[]={0.2,0.2,0.2};
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT,AmbColour);
-	// setup the Camera
-	Point3 Eye(15.0f,15.0f,15.0f);
-	Point3 Look(0.0f,0.0f,0.0f);
-	Vector Up(0.0f,1.0f,0.0f); //Y == UP
-	Cam.set(Eye,Look,Up);
-	Cam.setShape(45,640.0/480.0,0.5,150,PERSPECTIVE);
+	// setup the 
+	// Point3 Eye(15.0f,15.0f,15.0f);
+	// Point3 Look(0.0f,0.0f,0.0f);
+	// Vector Up(0.0f,1.0f,0.0f); //Y == UP
+	// Cam.set(Eye,Look,Up);
+	// Cam.setShape(45,640.0/480.0,0.5,150,PERSPECTIVE);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_COLOR_MATERIAL);
 	glColorMaterial(GL_FRONT,GL_AMBIENT_AND_DIFFUSE);
@@ -689,7 +679,7 @@ int main(int argc, char **argv)
 {
 	if(argc < 2)
 		{
-		cout <<"usage " << argv[0] << " [config file]"<<endl;
+			std::cout <<"usage " << argv[0] << " [config file]"<<std::endl;
 		exit(1);
 		}
 

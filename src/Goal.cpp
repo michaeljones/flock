@@ -2,7 +2,8 @@
 
 #include <iostream>
 
-#include "GraphicsLib.h"
+#include <GL/gl.h>
+#include <GL/glut.h>
 
 /*!
 \file Goal.cpp
@@ -11,10 +12,6 @@
 \version 1
 \date 06/02/06
 */
-
-using namespace GraphicsLib;
-using namespace std;
-
 
 /* Constructor:
 *  ------------
@@ -41,10 +38,10 @@ Goal::Goal(World& theContainer)
 *  ---------
 *	Adds the curve created to the goal curve follow object
 */
-void Goal::setCurve(GraphicsLib::CurveFollow& theCurve)
-{
-	curve = &theCurve;
-}
+// void Goal::setCurve()
+// {
+// 	// curve = &theCurve;
+// }
 
 
 /* Update:
@@ -54,20 +51,20 @@ void Goal::setCurve(GraphicsLib::CurveFollow& theCurve)
 */
 void Goal::Update()
 {
-	if(direction > 0)
-	{
-		Pos = curve->GetPointOnCurve(curveDistance);
-		curveDistance += 0.002;
-		if(curveDistance >= 1.0)
-			direction = -1;
-	} 
-	else 
-	{
-		Pos = curve->GetPointOnCurve(curveDistance);
-		curveDistance -= 0.002;
-		if(curveDistance <= 0.0)
-			direction = 1;
-	}
+	// if(direction > 0)
+	// {
+	// 	Pos = curve->GetPointOnCurve(curveDistance);
+	// 	curveDistance += 0.002;
+	// 	if(curveDistance >= 1.0)
+	// 		direction = -1;
+	// } 
+	// else 
+	// {
+	// 	Pos = curve->GetPointOnCurve(curveDistance);
+	// 	curveDistance -= 0.002;
+	// 	if(curveDistance <= 0.0)
+	// 		direction = 1;
+	// }
 }
 
 
@@ -79,7 +76,7 @@ void Goal::Draw()
 {
 	glPushMatrix();
 		// translate to the particle position
-		Pos.Translate();
+		// Pos.Translate();
 		glColor4f(1.0, 1.0, 1.0, 1.0);
 		glutSolidSphere(0.5, 3, 3);
 	glPopMatrix();

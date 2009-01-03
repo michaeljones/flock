@@ -1,13 +1,8 @@
 #include "Particle.h"
 
-#ifdef LINUX
-	#include <GL/gl.h>
-	#include <GL/glu.h>
-#endif
-#ifdef DARWIN
-	#include <OpenGL/gl.h>
-	#include <OpenGL/glu.h>
-#endif
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glut.h>
 
 /*!
 \file Particle.cpp
@@ -16,8 +11,6 @@
 \version 1
 \date 06/02/06
 */
-
-using namespace GraphicsLib;
 
 // Empty Constructor
 Particle::Particle()
@@ -35,16 +28,17 @@ Particle::~Particle()
 *  ------------
 *	Sets default values for the object
 */
-Particle::Particle(Point3 boidPos, Colour boidColour, float fHeight)
+Particle::Particle(Imath::V3f boidPos, Imath::Color4<float> boidColour, float fHeight)
 {
 	Pos = boidPos;
 	colour = boidColour;
 	
 	floorHeight = fHeight;
 	
-	Dir.set(RandomNum(0.3), RandomPosNum(0.5), RandomNum(0.3)); 
+	// Dir.set(RandomNum(0.3), RandomPosNum(0.5), RandomNum(0.3)); 
+	Dir.setValue( 0.0, 1.0, 0.0 );
 
-	gravity.set(0, -0.8, 0);
+	gravity.setValue(0.0, -0.8, 0.0);
 }
 
 /* Update:
@@ -69,8 +63,8 @@ void Particle::Draw()
 	// Draw particle
 	glPushMatrix();
 	
-		Pos.Translate();
-		colour.Use();
+		glTranslatef(Pos.x, Pos.y, Pos.z);
+		// colour.Use();
 		
 		glutSolidSphere(0.1, 3, 3);
 		

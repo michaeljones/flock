@@ -8,11 +8,10 @@ endif
 ifeq "$(OSVER)" "Linux"
 	ARCH=_LINUX_
 endif
-GRAPHICSLIB= -L$(HOME)/GraphicsLib/lib -lGraphics
 #########################################################################################
 # INCDIR is the flag to set the default include paths for the system
 #########################################################################################
-INCDIR = -Iinclude -I/usr/include -I$(HOME)/GraphicsLib/include
+INCDIR = -I/home/mike/projects/tools/include/OpenEXR
 
 ifeq "$(OSVER)" "Linux"
 	INCDIR+=-I/usr/X11R6/include
@@ -74,14 +73,12 @@ OBJECTS =  $(OBJDIR)main.o $(OBJDIR)Flock.o $(OBJDIR)Boid.o \
 # e.g. to add libX11.so use -lX11
 #########################################################################################
 XLIBS =  
-ifeq "$(OSVER)" "Darwin"
-	XLIBS +=  -framework Cocoa -framework OpenGL -framework GLUT -framework Foundation -lstdc++ -ltiff 
-endif
 
 ifeq "$(OSVER)" "Linux"
-	XLIBS +=  -lGL -lGLU -lglut -lstdc++ -ltiff -lMagick++
+	XLIBS +=  -lGL -lGLU -lglut -lstdc++
 endif
 
+VPATH = ../src
 
 #########################################################################################
 # MATHS flag to add the default maths lib (some linux distros need this)
@@ -104,7 +101,7 @@ $(LINK_TARGET) : $(OBJECTS)
 # this line will compile in turn each of the FILES from the OBJECTS variable (as a .cpp)
 # into a .o file for the linking stage
 #########################################################################################
-SRCDIR = src/
+SRCDIR = ../src/
 
 $(OBJECTS): $(OBJDIR)%.o: $(SRCDIR)%.cpp
 	g++ -D$(ARCH) -c $(FLAGS) $(GRAPHICSLIB) $(CCFLAGS) $(INCDIR) $< -o $@

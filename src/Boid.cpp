@@ -4,16 +4,9 @@
 #include <iostream>
 #include <math.h>
 
-#include "GraphicsLib.h"
-
-#ifdef LINUX
-	#include <GL/gl.h>
-	#include <GL/glu.h>
-#endif
-#ifdef DARWIN
-	#include <OpenGL/gl.h>
-	#include <OpenGL/glu.h>
-#endif
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glut.h>
 
 /*!
 \file Boid.cpp
@@ -22,8 +15,6 @@
 \version 1
 \date 06/02/06
 */
-
-using namespace GraphicsLib;
 
 /* Constructor:
 *  ---------------------
@@ -35,12 +26,13 @@ Boid::Boid(int bID, int fID,  double x, double y, double z, double spread)
 	flockID = fID;
 
 	// Create a spread of positions around an average
-	Pos.x = x + RandomPosNum(spread) - spread/2;
-	Pos.y = y + RandomPosNum(spread) - spread/2;
-	Pos.z = z + RandomPosNum(spread) - spread/2;
+	Pos.x = x + /*RandomPosNum(spread) -*/ spread/2;
+	Pos.y = y + /*RandomPosNum(spread) -*/ spread/2;
+	Pos.z = z + /*RandomPosNum(spread) -*/ spread/2;
 	
 	// Create a spread of velocities
-	Vel.set(RandomPosNum(5) - 2.5, RandomPosNum(5) - 2.5, RandomPosNum(5) - 2.5, 0);
+	// Vel.setValue(RandomPosNum(5) - 2.5, RandomPosNum(5) - 2.5, RandomPosNum(5) - 2.5, 0);
+	Vel.setValue( 0, 0, 0 );
 	
 	// Pitch
 	Dir.x = -atan(Vel.y/sqrt(Vel.x*Vel.x + Vel.z*Vel.z));
@@ -49,8 +41,7 @@ Boid::Boid(int bID, int fID,  double x, double y, double z, double spread)
 	Dir.y = atan2(Vel.x, Vel.z);
 	
 	// Zero the inital acceleration
-	Acc.null();
-	Acc.w = 0.0;
+	Acc.setValue(0.0, 0.0, 0.0 );
 }
 
 /* Draw:
@@ -66,7 +57,8 @@ void Boid::Draw(float floorHeight) const
 	glPushMatrix();
 	
 		// translate to the particle position
-		Pos.Translate();
+		// Pos.Translate();
+		glTranslatef( Pos.x, Pos.y, Pos.z );
 		
 		// Convert from radians to degrees
 		Pitch = Dir.x * 57.295779524;

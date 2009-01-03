@@ -4,8 +4,6 @@
 #include "Flock.h"
 #include "Object.h"
 
-#include "GraphicsLib.h"
-
 /*!
 \file World.h
 \brief contains world (bounding box) information for a flock 

@@ -2,14 +2,8 @@
 #include "Flock.h"
 #include "Object.h"
 
-#ifdef LINUX
-	#include <GL/gl.h>
-	#include <GL/glu.h>
-#endif
-#ifdef DARWIN
-	#include <OpenGL/gl.h>
-	#include <OpenGL/glu.h>
-#endif
+#include <GL/gl.h>
+#include <GL/glu.h>
 
 /*!
 \file World.cpp

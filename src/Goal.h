@@ -3,8 +3,6 @@
 
 #include "World.h"
 
-#include "GraphicsLib.h"
-
 /*!
 \file Goal.h
 \brief contains target for flock placed on a curve
@@ -18,13 +16,13 @@ class Goal
 public:
 
 /*! 3-dimensional position of the goal in space */
-GraphicsLib::Point3 Pos;
+	Imath::V3f Pos;
 
 /*! static 3-dimensional vector specifying the goal's velocity */
-GraphicsLib::Vector Vel;
+	Imath::V3f Vel;
 
 /*! Curve object that the goal follows through space */
-GraphicsLib::CurveFollow *curve;
+// Imath::V3follow *curve;
 
 /*! Distance along the curve at the current time */
 float curveDistance;
@@ -42,7 +40,7 @@ Goal(World& theContainer);
 /*! \fn setCurve(GraphicsLib::CurveFollow& theCurve)
 	this method sets the curve for goal object to follow
 	\param theCurve - the CurveFollow object to set the curve to*/
-void setCurve(GraphicsLib::CurveFollow& theCurve);
+// void setCurve(GraphicsLib::CurveFollow& theCurve);
 
 /*! \fn void Update()
 	this method updates the position of the goal along the curve, reversing its direction when it reaches either end*/

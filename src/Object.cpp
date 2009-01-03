@@ -1,6 +1,7 @@
 #include "Object.h"
 
-#include "GraphicsLib.h"
+#include <GL/gl.h>
+#include <GL/glut.h>
 
 /*!
 \file Object.cpp
@@ -9,8 +10,6 @@
 \version 1
 \date 06/02/06
 */
-
-using namespace GraphicsLib;
 
 /* Constructor:
 *  ------------
@@ -70,7 +69,7 @@ void Object::Draw()
 {
 	// Draw sphere
 	glPushMatrix();
-		Pos.Translate();
+		glTranslatef(Pos.x, Pos.y, Pos.z);
 		glColor4f(1.0, 1.0, 1.0, 1.0);
 		glutSolidSphere(2, 9, 9);
 	glPopMatrix();

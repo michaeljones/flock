@@ -56,11 +56,12 @@ void World::DrawGround()
 		glColor4f(0.0, 1.0, 0.0, 1.0);
 	
 		glBegin(GL_POLYGON);
-			glVertex3f(minX, 0.0, minZ);
-			glVertex3f(minX, 0.0, maxZ);
-			glVertex3f(maxX, 0.0, maxZ);
-			glVertex3f(maxX, 0.0, minZ);
+			glVertex3f(minX, -1.0, minZ);
+			glVertex3f(minX, -1.0, maxZ);
+			glVertex3f(maxX, -1.0, maxZ);
+			glVertex3f(maxX, -1.0, minZ);
 		glEnd();
 
 	glPopMatrix();
 }
+

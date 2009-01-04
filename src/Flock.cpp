@@ -8,6 +8,8 @@
 #include <iomanip>
 #include <fstream>
 
+#include <GL/gl.h>
+
 /*!
 \file Flock.cpp
 \brief contains methods for the flock class
@@ -1101,7 +1103,7 @@ void Flock::Draw()
 	
 	while(currentB != endB)
 	{
-		// colour.Use();
+		glColor4f( colour.r, colour.b, colour.g, colour.a );// colour.Use();
 		(*currentB)->Draw(container->minY);
 		++currentB;
 	}
@@ -1145,6 +1147,5 @@ void Flock::OBJExport(int frame)
 		}
 	
 	OBJFile.close();
-	
 }
 

@@ -44,12 +44,12 @@ endif
 #########################################################################################
 # LIBS add library search path to the compiler
 #########################################################################################
-LIBS=
+LIBS= -L/home/mike/projects/tools/lib
 ifeq "$(OSVER)" "Linux"
-	LIBS =
+	LIBS +=
 endif
 ifeq "$(OSVER)" "Darwin"
-	LIBS =
+	LIBS +=
 endif
 
 #########################################################################################
@@ -75,7 +75,7 @@ OBJECTS =  $(OBJDIR)main.o $(OBJDIR)Flock.o $(OBJDIR)Boid.o \
 XLIBS =  
 
 ifeq "$(OSVER)" "Linux"
-	XLIBS +=  -lGL -lGLU -lglut -lstdc++
+	XLIBS +=  -lGL -lGLU -lglut -lstdc++ -lImath
 endif
 
 VPATH = ../src
@@ -110,7 +110,7 @@ $(OBJECTS): $(OBJDIR)%.o: $(SRCDIR)%.cpp
 # rule to remove and backup files, .o files and the exe for a clean build
 #########################################################################################
 clean :
-	rm -f $(OBJDIR)*.o; rm -f $(LINK_TARGET); rm -f src/*~ include/*~
+	rm -f $(OBJDIR)*.o; rm -f $(LINK_TARGET); 
 #########################################################################################
 # end of Makefile
 #########################################################################################

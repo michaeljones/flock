@@ -32,6 +32,8 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 
+#include <ImathGLU.h>
+
 // Escape key defined for use in keyboard function
 #define ESCAPE 27
 
@@ -98,6 +100,10 @@ void Display()
 		
 		std::vector<Object*>::iterator currentObject = objects.begin();
 		std::vector<Object*>::iterator endObject = objects.end();
+
+		glBegin( GL_POINTS );
+			glVertex3f( 0.0, 0.0, 0.0 );
+		glEnd();
 	
 		// Cycle through all the flocks and call the draw methods for each one
 		while(currentObject != endObject)
@@ -664,9 +670,13 @@ void InitialiseGL()
 	GLfloat AmbColour[]={0.2,0.2,0.2};
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT,AmbColour);
 	// setup the 
-	// Point3 Eye(15.0f,15.0f,15.0f);
-	// Point3 Look(0.0f,0.0f,0.0f);
-	// Vector Up(0.0f,1.0f,0.0f); //Y == UP
+	float val = 30.0f;
+	Imath::V3f eye(val, val, val);
+	Imath::V3f look(0.0f,0.0f,0.0f);
+	Imath::V3f up(0.0f,1.0f,0.0f); //Y == UP
+	glMatrixMode(GL_MODELVIEW);
+	gluPerspective( 45, 640.0/480.0, 0.5, 150 ); 
+	gluLookAt( eye, look, up );
 	// Cam.set(Eye,Look,Up);
 	// Cam.setShape(45,640.0/480.0,0.5,150,PERSPECTIVE);
 	glEnable(GL_LIGHTING);
@@ -678,10 +688,10 @@ void InitialiseGL()
 int main(int argc, char **argv)
 {
 	if(argc < 2)
-		{
-			std::cout <<"usage " << argv[0] << " [config file]"<<std::endl;
+	{
+		std::cout <<"usage " << argv[0] << " [config file]"<<std::endl;
 		exit(1);
-		}
+	}
 
 	// Create default world.
 	CreateWorld(60, -60, 30, -30, 30, -30);
@@ -708,10 +718,7 @@ int main(int argc, char **argv)
 	Filename = argv[1];
 	ParseConfigFile();	
 
-	
-
 	glutMainLoop();
 	
-	
-	return 1;
+	return 0;
 }

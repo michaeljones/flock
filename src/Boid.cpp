@@ -8,6 +8,8 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 
+#include <ImathRandom.h>
+
 /*!
 \file Boid.cpp
 \brief contains methods for the boid class
@@ -25,14 +27,16 @@ Boid::Boid(int bID, int fID,  double x, double y, double z, double spread)
 	boidID = bID;
 	flockID = fID;
 
+	Imath::Rand48 rand( bID );
+
 	// Create a spread of positions around an average
-	Pos.x = x + /*RandomPosNum(spread) -*/ spread/2;
-	Pos.y = y + /*RandomPosNum(spread) -*/ spread/2;
-	Pos.z = z + /*RandomPosNum(spread) -*/ spread/2;
-	
+	Pos.x = x + rand.nextf(-1.0, 1.0) * spread/2;
+	Pos.y = y + rand.nextf(-1.0, 1.0) * spread/2;
+	Pos.z = z + rand.nextf(-1.0, 1.0) * spread/2;
+
 	// Create a spread of velocities
 	// Vel.setValue(RandomPosNum(5) - 2.5, RandomPosNum(5) - 2.5, RandomPosNum(5) - 2.5, 0);
-	Vel.setValue( 0, 0, 0 );
+	Vel.setValue( 1, 1, 1 );
 	
 	// Pitch
 	Dir.x = -atan(Vel.y/sqrt(Vel.x*Vel.x + Vel.z*Vel.z));

@@ -11,21 +11,17 @@
 \date 06/02/06
 */
 
+namespace Flock {
+
 /* Constructor:
 *  ------------
 *	Sets default values for the object
 */
 Object::Object(World& theContainer, float x, float y, float z)
+ :	m_pos( x, y, z ),
+	m_vel( 0.0f, 0.0f, 0.0f )
 {
-	Pos.x = x;
-	Pos.y = y;
-	Pos.z = z;
-
-	Vel.x = 0.0;
-	Vel.y = 0.0;
-	Vel.z = 0.0;
-
-	container = &theContainer;
+	m_container = &theContainer;
 }
 
 /* Contain:
@@ -35,18 +31,18 @@ Object::Object(World& theContainer, float x, float y, float z)
 */
 void Object::Contain()
 {
-		if(Pos.x > container->maxX)
-			Pos.x = container->minX;
-		else if(Pos.x < container->minX)
-			Pos.x = container->maxX;
-		else if(Pos.y > container->maxY)
-			Pos.y = container->minY;
-		else if(Pos.y < container->minY)
-			Pos.y = container->maxY;
-		else if(Pos.z > container->maxZ)
-			Pos.z = container->minZ;
-		else if(Pos.z < container->minZ)
-			Pos.z = container->maxY;
+		if(m_pos.x > m_container->maxX)
+			m_pos.x = m_container->minX;
+		else if(m_pos.x < m_container->minX)
+			m_pos.x = m_container->maxX;
+		else if(m_pos.y > m_container->maxY)
+			m_pos.y = m_container->minY;
+		else if(m_pos.y < m_container->minY)
+			m_pos.y = m_container->maxY;
+		else if(m_pos.z > m_container->maxZ)
+			m_pos.z = m_container->minZ;
+		else if(m_pos.z < m_container->minZ)
+			m_pos.z = m_container->maxY;
 }
 
 /* Update:
@@ -55,7 +51,7 @@ void Object::Contain()
 */
 void Object::Update()
 {
-	Pos += Vel;
+	m_pos += m_vel;
 
 	Contain();
 }
@@ -69,14 +65,14 @@ void Object::Draw()
 {
 	// Draw sphere
 	glPushMatrix();
-		glTranslatef(Pos.x, Pos.y, Pos.z);
+		glTranslatef(m_pos.x, m_pos.y, m_pos.z);
 		glColor4f(1.0, 1.0, 1.0, 1.0);
 		glutSolidSphere(2, 9, 9);
 	glPopMatrix();
 	
 	// Draw Shadow
 	glPushMatrix();
-		glTranslatef(Pos.x, container->minY + 0.01, Pos.z);
+		glTranslatef(m_pos.x, m_container->minY + 0.01, m_pos.z);
 		glColor4f(0.1, 0.3, 0.1, 1.0);
 		glBegin(GL_TRIANGLE_FAN);
 			
@@ -89,3 +85,5 @@ void Object::Draw()
 		glEnd();
 	glPopMatrix();
 }
+
+} // Flock

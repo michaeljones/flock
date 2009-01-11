@@ -1,4 +1,5 @@
 #include "Flock.h"
+
 #include "Boid.h"
 #include "World.h"
 #include "Particle.h"
@@ -18,49 +19,26 @@
 \date 06/02/06
 */
 
-// Empty constructor method
-Flock::Flock()
-{
-
-}
+namespace Flock {
 
 /* Constructor:
 *  ---------------------
 *	Sets default values for flock properties
 */
 Flock::Flock(int fID, World& theContainer)
+ :	m_id( fID ),
+	m_container( theContainer ),
+	m_rank( 0 ),
+	m_containmentAcc( 500 ),
+	m_colour( 1.0f, 1.0f, 1.0f, 1.0f ),
+	m_behaviour( 1.0f, 3.0f ),
+	m_boidTR( 5.0f ),
+	m_objectTR( 10.0f ),
+	m_fleeTR( 10.f ),
+	m_gravity( 0.0f, -9.8f, 0.0f ),
+	m_null( 0.0f, 0.0f, 0.0f )
 {
-	container = &theContainer;
-	flockID = fID;
-	
-	rank = 0;
-	bDepth = 3;
-	bScale = 2;
-	
-	containmentAcc = 500;
-	
-	colour.setValue( 1.0, 1.0, 1.0, 1.0 );
 
-	// Default test radius values	
-	boidTR = 5.0;
-	objectTR = 10.0;
-	fleeTR = 10.0;
-	
-	// Default min, max and scale values
-	maxVel = 5.0;
-	minVel = 0.0;
-	maxAcc = 1.0;	
-
-	scaleLocalFC = scaleGlobalFC = scaleGoalFC = scaleCA = scaleOA = scaleVM = 1.0;
-	maxLocalFC   = maxGlobalFC   = maxGoalFC   = maxCA   = maxOA   = maxVM   = 3.0;
-	
-	scaleHunt = scaleFlee = 1.0;
-	maxHunt = maxFlee = 3.0;
-	
-	// Gravitational down direction
-	gravity.setValue(0.0, -9.8, 0.0);
-
-	Null.setValue( 0.0, 0.0, 0.0 );
 }
 
 
@@ -90,7 +68,7 @@ void Flock::NearestNeighbours(std::vector<Boid*>& neighbourBoids, Boid* homeBoid
 	// Create a copy of the current boid vector so that
 	// elements can be deleted as needed.
 	std::vector<Boid*> dummyBoids;
-	dummyBoids.assign(boids.begin(), boids.end());
+	dummyBoids.assign(m_boids.begin(), m_boids.end());
 	
 	// Set iterators
 	std::vector<Boid*>::iterator currentBoid = dummyBoids.begin();
@@ -101,7 +79,7 @@ void Flock::NearestNeighbours(std::vector<Boid*>& neighbourBoids, Boid* homeBoid
 	// so that it cannot appear as its own neighbour
 	while(currentBoid != endBoid)
 	{
-		if((*currentBoid)->boidID == homeBoid->boidID)
+		if((*currentBoid)->id() == homeBoid->id())
 		{
 			dummyBoids.erase(currentBoid);
 			endBoid = dummyBoids.end();
@@ -124,7 +102,7 @@ void Flock::NearestNeighbours(std::vector<Boid*>& neighbourBoids, Boid* homeBoid
 
 		// Set minDistance initial value to the distance of the first boid
 		// in the vector simply as a starting point. 
-		distVec = (*currentBoid)->Pos - homeBoid->Pos;
+		distVec = (*currentBoid)->pos() - homeBoid->pos();
 		distance = distVec.length();
 	
 		float minDistance = distance;
@@ -134,7 +112,7 @@ void Flock::NearestNeighbours(std::vector<Boid*>& neighbourBoids, Boid* homeBoid
 		while(currentBoid != endBoid)
 		{
 			// Find distance to the flock mate
-			distVec = (*currentBoid)->Pos - homeBoid->Pos;
+			distVec = (*currentBoid)->pos() - homeBoid->pos();
 			distance = distVec.length();
 
 			// If that distance is less than the minDistance 
@@ -167,10 +145,10 @@ void Flock::NearestNeighbours(std::vector<Boid*>& neighbourBoids, Boid* homeBoid
 */
 void Flock::GetFlockCentre()
 {
-	std::vector<Boid*>::iterator currentBoid = boids.begin();
-	std::vector<Boid*>::iterator endBoid = boids.end();
+	std::vector<Boid*>::iterator currentBoid = m_boids.begin();
+	std::vector<Boid*>::iterator endBoid = m_boids.end();
 
-	flockCentre.setValue(0,0,0);
+	m_flockCentre.setValue(0,0,0);
 
 	int count = 0;
 
@@ -178,13 +156,13 @@ void Flock::GetFlockCentre()
 	while(currentBoid != endBoid)
 	{
 		// Sum up positions
-		flockCentre = flockCentre + (*currentBoid)->Pos;
+		m_flockCentre = m_flockCentre + (*currentBoid)->pos();
 		++count;
 		++currentBoid;
 	}
 	
 	// Divide by number of boids to get the average.
-	flockCentre = flockCentre / count;
+	m_flockCentre = m_flockCentre / count;
 	
 }
 
@@ -197,7 +175,7 @@ void Flock::GetFlockCentre()
 */
 void Flock::LocalFlockCentring()
 {
-	if(numMembers > 1)
+	if( m_numMembers > 1 )
 	{
 		// Create the vector to store the local flock mates.
 		std::vector<Boid*> nearestNeighbours;
@@ -205,16 +183,16 @@ void Flock::LocalFlockCentring()
 		std::vector<Boid*>::iterator currentNeigh;
 		std::vector<Boid*>::iterator endNeigh;
 		
-		std::vector<Boid*>::iterator currentBoid = boids.begin();
-		std::vector<Boid*>::iterator endBoid = boids.end();
+		std::vector<Boid*>::iterator currentBoid = m_boids.begin();
+		std::vector<Boid*>::iterator endBoid = m_boids.end();
 	
 		Imath::V3f AveragePos(0,0,0);
 		Imath::V3f Accelerate;
 	
 		int numNeighbours = 5;
 		
-		if(numNeighbours > numMembers-1)
-			numNeighbours = numMembers - 1; 
+		if(numNeighbours > m_numMembers-1)
+			numNeighbours = m_numMembers - 1; 
 		
 	
 		// Cycle through all the boids in the flock.
@@ -230,7 +208,7 @@ void Flock::LocalFlockCentring()
 			//  Cycle through the neighbours and add up their position vectors.
 			while(currentNeigh != endNeigh)
 			{
-				AveragePos = AveragePos + (*currentNeigh)->Pos;
+				AveragePos = AveragePos + (*currentNeigh)->pos();
 				++currentNeigh;
 			}
 	
@@ -241,14 +219,14 @@ void Flock::LocalFlockCentring()
 			// Use the average position and the boid's position to create
 			// a vector from the boid to the local flock centre. Use it as
 			// as acceleration.
-			Accelerate = AveragePos - (*currentBoid)->Pos;
+			Accelerate = AveragePos - (*currentBoid)->pos();
 	
-			Accelerate = Accelerate * scaleLocalFC;
+			Accelerate = Accelerate * m_behaviour.localFC.scale;
 			// Clamp it off if it is too high.
-			Clamp(Accelerate, maxLocalFC);
+			Clamp( Accelerate, m_behaviour.localFC.max );
 	
 			// Add it to the boid's current acceleration.
-			(*currentBoid)->Acc = (*currentBoid)->Acc + Accelerate;
+			(*currentBoid)->accelerate( Accelerate );
 	
 			nearestNeighbours.clear();
 			++currentBoid;
@@ -264,8 +242,8 @@ void Flock::LocalFlockCentring()
 */
 void Flock::GlobalFlockCentring()	// Clamped
 {
-	std::vector<Boid*>::iterator currentBoid = boids.begin();
-	std::vector<Boid*>::iterator endBoid = boids.end();
+	std::vector<Boid*>::iterator currentBoid = m_boids.begin();
+	std::vector<Boid*>::iterator endBoid = m_boids.end();
 
 	Imath::V3f Accelerate;
 	
@@ -273,14 +251,14 @@ void Flock::GlobalFlockCentring()	// Clamped
 	while(currentBoid != endBoid)
 	{
 		// Generate acceleration from difference between boid pos and the flock centre pos.
-		Accelerate = flockCentre - (*currentBoid)->Pos;
+		Accelerate = m_flockCentre - (*currentBoid)->pos();
 
 		// Scale and clamp appropriately
-		Accelerate = Accelerate * scaleGlobalFC;
-		Clamp(Accelerate, maxGlobalFC);
+		Accelerate = Accelerate * m_behaviour.globalFC.scale;
+		Clamp(Accelerate, m_behaviour.globalFC.max);
 
 		// Add accel to current boids accel vector.
-		(*currentBoid)->Acc = (*currentBoid)->Acc + Accelerate;
+		(*currentBoid)->accelerate( Accelerate );
 
 		++currentBoid;
 	}
@@ -294,8 +272,8 @@ void Flock::GlobalFlockCentring()	// Clamped
 */
 void Flock::GoalFlockCentring(Imath::V3f &target)	// Clamped
 {
-	std::vector<Boid*>::iterator currentBoid = boids.begin();
-	std::vector<Boid*>::iterator endBoid = boids.end();
+	std::vector<Boid*>::iterator currentBoid = m_boids.begin();
+	std::vector<Boid*>::iterator endBoid = m_boids.end();
 
 	Imath::V3f Accelerate;
 
@@ -303,13 +281,13 @@ void Flock::GoalFlockCentring(Imath::V3f &target)	// Clamped
 	while(currentBoid != endBoid)
 	{
 		// Generate acceleration from difference between boid pos and the goal pos.
-		Accelerate = target - (*currentBoid)->Pos;
+		Accelerate = target - (*currentBoid)->pos();
 		
 		// Scale and clamp appropriately.
-		Accelerate = Accelerate * scaleGoalFC;
-		Clamp(Accelerate, maxGoalFC);
+		Accelerate = Accelerate * m_behaviour.goalFC.scale;
+		Clamp(Accelerate, m_behaviour.goalFC.max);
 		
-		(*currentBoid)->Acc = (*currentBoid)->Acc + Accelerate;
+		(*currentBoid)->accelerate( Accelerate );
 
 		++currentBoid;
 	}
@@ -323,15 +301,15 @@ void Flock::GoalFlockCentring(Imath::V3f &target)	// Clamped
 */
 void Flock::CollisionAvoidance()	// Clamped
 {
-	std::vector<Boid*>::iterator currentBoid = boids.begin();
-	std::vector<Boid*>::iterator otherBoid = boids.begin();
-	std::vector<Boid*>::iterator endBoid = boids.end();
+	std::vector<Boid*>::iterator currentBoid = m_boids.begin();
+	std::vector<Boid*>::iterator otherBoid = m_boids.begin();
+	std::vector<Boid*>::iterator endBoid = m_boids.end();
 
 	Imath::V3f distVec;
 	float distance;
 
 	Imath::V3f Accelerate;
-	Accelerate = Null;
+	Accelerate = m_null;
 
 	int count = 0;
 
@@ -343,13 +321,13 @@ void Flock::CollisionAvoidance()	// Clamped
 		{
 			// Check to make sure the boid isn't the one we're
 			// testing against.
-			if((*otherBoid)->boidID != (*currentBoid)->boidID)
+			if((*otherBoid)->id() != (*currentBoid)->id())
 			{
-				distVec =  (*currentBoid)->Pos - (*otherBoid)->Pos;
+				distVec =  (*currentBoid)->pos() - (*otherBoid)->pos();
 				distance = distVec.length();
 				
 				// Check to see if distance to otherBoid is within test radius BoidTR.
-				if(distance < boidTR)
+				if(distance < m_boidTR)
 				{
 					// Create an acceleration proportional to the distance to the otherBoid.
 					Accelerate = Accelerate + (distVec / (distance * distance));
@@ -360,15 +338,15 @@ void Flock::CollisionAvoidance()	// Clamped
 			++otherBoid;
 		}
 
-		Accelerate = Accelerate * scaleCA;
+		Accelerate = Accelerate * m_behaviour.collisionAvoidance.scale;
 		// Clamp it off if it is too high.
-		Clamp(Accelerate, maxCA);
+		Clamp(Accelerate, m_behaviour.collisionAvoidance.max);
 
 		// Add it to the boid's current acceleration.
-		(*currentBoid)->Acc = (*currentBoid)->Acc + Accelerate;
+		(*currentBoid)->accelerate( Accelerate );
 
-		otherBoid = boids.begin();
-		Accelerate = Null; // Comment out for cool flocking.
+		otherBoid = m_boids.begin();
+		Accelerate = m_null; // Comment out for cool flocking.
 		++currentBoid;
 	}
 }
@@ -381,7 +359,7 @@ void Flock::CollisionAvoidance()	// Clamped
 */
 void Flock::VelMatching()	// Clamped
 {
-	if(numMembers > 1)
+	if(m_numMembers > 1)
 	{
 		
 		// Create the vector to store the local flock mates.
@@ -390,8 +368,8 @@ void Flock::VelMatching()	// Clamped
 		std::vector<Boid*>::iterator currentNeigh;
 		std::vector<Boid*>::iterator endNeigh;
 		
-		std::vector<Boid*>::iterator currentBoid = boids.begin();
-		std::vector<Boid*>::iterator endBoid = boids.end();
+		std::vector<Boid*>::iterator currentBoid = m_boids.begin();
+		std::vector<Boid*>::iterator endBoid = m_boids.end();
 	
 		Imath::V3f Velocity;
 		Imath::V3f Accelerate;
@@ -401,8 +379,8 @@ void Flock::VelMatching()	// Clamped
 		{
 			int numNeighbours = 10;
 		
-			if(numNeighbours > numMembers-1)
-				numNeighbours = numMembers - 1; 
+			if(numNeighbours > m_numMembers-1)
+				numNeighbours = m_numMembers - 1; 
 		
 			// Method populates the nearestNeighbours vector with 
 			// pointers to the nearest 'n' flock mates of the current boid.
@@ -414,7 +392,7 @@ void Flock::VelMatching()	// Clamped
 			//  Cycle through the neighbours and add up their velocity vectors.
 			while(currentNeigh != endNeigh)
 			{
-				Velocity = Velocity + (*currentNeigh)->Vel;
+				Velocity = Velocity + (*currentNeigh)->vel();
 				++currentNeigh;
 			}
 	
@@ -425,14 +403,14 @@ void Flock::VelMatching()	// Clamped
 			// Use the average velocity and the boid's velocity to create
 			// a vector from the boid to the local flock centre. Use it as
 			// as acceleration.
-			Accelerate = Velocity - (*currentBoid)->Vel;
+			Accelerate = Velocity - (*currentBoid)->vel();
 		
-			Accelerate = Accelerate * scaleVM;
+			Accelerate = Accelerate * m_behaviour.velocityMatching.scale;
 			// Clamp it off if it is too high.
-			Clamp(Accelerate, maxVM);
+			Clamp(Accelerate, m_behaviour.velocityMatching.max);
 	
 			// Add it to the boid's current acceleration.
-			(*currentBoid)->Acc = (*currentBoid)->Acc + Accelerate;
+			(*currentBoid)->accelerate( Accelerate );
 	
 			nearestNeighbours.clear();
 			++currentBoid;
@@ -449,28 +427,28 @@ void Flock::VelMatching()	// Clamped
 */
 void Flock::CentralObjectAvoidance()
 {
-	std::vector<Boid*>::iterator currentBoid = boids.begin();
-	std::vector<Boid*>::iterator endBoid = boids.end();
+	std::vector<Boid*>::iterator currentBoid = m_boids.begin();
+	std::vector<Boid*>::iterator endBoid = m_boids.end();
 
-	std::vector<Object*>::iterator currentObject = container->objects.begin();
-	std::vector<Object*>::iterator endObject = container->objects.end();
+	std::vector<Object*>::iterator currentObject = m_container.objects.begin();
+	std::vector<Object*>::iterator endObject = m_container.objects.end();
 
 	Imath::V3f distVec;
 	float distance;
 
 	Imath::V3f Accelerate;
-	Accelerate = Null;
+	Accelerate = m_null;
 
 	// Cycle through all the boids.
 	while(currentBoid != endBoid)
 	{
 		while(currentObject != endObject)
 		{
-			distVec =  (*currentBoid)->Pos - (*currentObject)->Pos;
+			distVec =  (*currentBoid)->pos() - (*currentObject)->pos();
 			distance = distVec.length();	
 			
 			// Check to see if distance to otherBoid is within test radius BoidTR.
-			if(distance < objectTR)
+			if(distance < m_objectTR)
 			{
 
 				// Create an acceleration proportional to the distance to the otherBoid.
@@ -479,16 +457,16 @@ void Flock::CentralObjectAvoidance()
 			++currentObject;
 		}
 	
-		Accelerate = Accelerate * scaleOA;
+		Accelerate = Accelerate * m_behaviour.objectAvoidance.scale;
 		// Clamp it off if it is too high.
-		Clamp(Accelerate, maxOA);
+		Clamp(Accelerate, m_behaviour.objectAvoidance.max);
 	
 		// Add it to the boid's current acceleration.
-		(*currentBoid)->Acc = (*currentBoid)->Acc + Accelerate;
+		(*currentBoid)->accelerate( Accelerate );
 
-		currentObject = container->objects.begin();
+		currentObject = m_container.objects.begin();
 
-		Accelerate = Null; // Comment out for cool flocking.
+		Accelerate = m_null; // Comment out for cool flocking.
 		++currentBoid;
 	}
 }
@@ -500,11 +478,11 @@ void Flock::CentralObjectAvoidance()
 */
 void Flock::CylindricalObjectAvoidance()
 {
-	std::vector<Boid*>::iterator currentBoid = boids.begin();
-	std::vector<Boid*>::iterator endBoid = boids.end();
+	std::vector<Boid*>::iterator currentBoid = m_boids.begin();
+	std::vector<Boid*>::iterator endBoid = m_boids.end();
 
-	std::vector<Object*>::iterator currentObject = container->objects.begin();
-	std::vector<Object*>::iterator endObject = container->objects.end();
+	std::vector<Object*>::iterator currentObject = m_container.objects.begin();
+	std::vector<Object*>::iterator endObject = m_container.objects.end();
 
 	Imath::V3f distVec;
 	float distance;
@@ -512,7 +490,7 @@ void Flock::CylindricalObjectAvoidance()
 	Imath::V3f Accelerate;
 	Imath::V3f TempRight;
 	Imath::V3f TempLeft;
-	Accelerate = Null;
+	Accelerate = m_null;
 
 	Imath::V3f Up;
 	Up.setValue(0,1,0);
@@ -522,19 +500,19 @@ void Flock::CylindricalObjectAvoidance()
 	{
 		while(currentObject != endObject)
 		{
-			distVec =  (*currentObject)->Pos - (*currentBoid)->Pos;
+			distVec =  (*currentObject)->pos() - (*currentBoid)->pos();
 			distance = distVec.length();
 			
 			// Check to see if distance to object is within test radius ObjectTR.
-			if(distance < objectTR)
+			if(distance < m_objectTR)
 			{
 				// test to see if object is infront of boid
-				if((*currentBoid)->Vel.dot(distVec) > 0)
+				if((*currentBoid)->vel().dot(distVec) > 0)
 				{
 					TempRight = distVec.cross(Up);
 
 					// test to see if boid should loop to left or right
-					if(TempRight.dot((*currentBoid)->Vel) > 0)
+					if(TempRight.dot((*currentBoid)->vel()) > 0)
 						Accelerate = Accelerate + (TempRight/distance);
 					else 
 						Accelerate = Accelerate + (distVec.cross(-Up)/distance);
@@ -543,16 +521,16 @@ void Flock::CylindricalObjectAvoidance()
 			++currentObject;
 		}
 	
-		Accelerate = Accelerate * scaleOA;
+		Accelerate = Accelerate * m_behaviour.objectAvoidance.scale;
 		// Clamp it off if it is too high.
-		Clamp(Accelerate, maxOA);
+		Clamp(Accelerate, m_behaviour.objectAvoidance.max);
 	
 		// Add it to the boid's current acceleration.
-		(*currentBoid)->Acc = (*currentBoid)->Acc + Accelerate;
+		(*currentBoid)->accelerate( Accelerate );
 
-		currentObject = container->objects.begin();
+		currentObject = m_container.objects.begin();
 
-		Accelerate = Null; // Comment out for cool flocking.
+		Accelerate = m_null; // Comment out for cool flocking.
 		++currentBoid;
 	}
 }
@@ -565,11 +543,11 @@ void Flock::CylindricalObjectAvoidance()
 */
 void Flock::SphericalObjectAvoidance()
 {
-	std::vector<Boid*>::iterator currentBoid = boids.begin();
-	std::vector<Boid*>::iterator endBoid = boids.end();
+	std::vector<Boid*>::iterator currentBoid = m_boids.begin();
+	std::vector<Boid*>::iterator endBoid = m_boids.end();
 
-	std::vector<Object*>::iterator currentObject = container->objects.begin();
-	std::vector<Object*>::iterator endObject = container->objects.end();
+	std::vector<Object*>::iterator currentObject = m_container.objects.begin();
+	std::vector<Object*>::iterator endObject = m_container.objects.end();
 
 	Imath::V3f distVec;
 	float distance;
@@ -577,7 +555,7 @@ void Flock::SphericalObjectAvoidance()
 	Imath::V3f Accelerate;
 	Imath::V3f TempRight;
 	Imath::V3f TempLeft;
-	Accelerate = Null;
+	Accelerate = m_null;
 
 	Imath::V3f inPlane;
 	float inPlaneFactor;
@@ -587,16 +565,16 @@ void Flock::SphericalObjectAvoidance()
 	{
 		while(currentObject != endObject)
 		{
-			distVec =  (*currentObject)->Pos - (*currentBoid)->Pos;
+			distVec =  (*currentObject)->pos() - (*currentBoid)->pos();
 			distance = distVec.length();
 			
 			// Check to see if distance to object is within test radius ObjectTR.
-			if(distance < objectTR)
+			if(distance < m_objectTR)
 			{
 				// test to see if object is infront of boid
-				if((*currentBoid)->Vel.dot(distVec) > 0)
+				if((*currentBoid)->vel().dot(distVec) > 0)
 				{
-					Imath::V3f normVel = (*currentBoid)->Vel;
+					Imath::V3f normVel = (*currentBoid)->vel();
 					normVel.normalize();
 					
 					Imath::V3f normDist = distVec;
@@ -614,7 +592,7 @@ void Flock::SphericalObjectAvoidance()
 					Imath::V3f Accel = inPlane/(inPlaneLength*inPlaneLength*inPlaneLength*inPlaneLength);
 					
 					// Scale down acceleration if boids is far from object or already to the side of the object
-					Accel = Accel * (1-(distance/objectTR)) * inPlaneFactor;
+					Accel = Accel * (1-(distance/m_objectTR)) * inPlaneFactor;
 					
 					Accelerate = Accelerate + Accel;
 					
@@ -623,16 +601,16 @@ void Flock::SphericalObjectAvoidance()
 			++currentObject;
 		}
 	
-		Accelerate = Accelerate * scaleOA;
+		Accelerate = Accelerate * m_behaviour.objectAvoidance.scale;
 		// Clamp it off if it is too high.
-		Clamp(Accelerate, maxOA);
+		Clamp(Accelerate, m_behaviour.objectAvoidance.max);
 	
 		// Add it to the boid's current acceleration.
-		(*currentBoid)->Acc = (*currentBoid)->Acc + Accelerate;
+		(*currentBoid)->accelerate( Accelerate );
 
-		currentObject = container->objects.begin();
+		currentObject = m_container.objects.begin();
 
-		Accelerate = Null; // Comment out for cool flocking.
+		Accelerate = m_null; // Comment out for cool flocking.
 		++currentBoid;
 	}
 }
@@ -647,25 +625,25 @@ void Flock::Hunt()
 {
 	std::vector<Boid*> preyBoids;	
 
-	std::vector<Flock*>::iterator otherFlock = container->flocks.begin();
-	std::vector<Flock*>::iterator endFlock = container->flocks.end();
+	std::vector<Flock*>::iterator otherFlock = m_container.flocks.begin();
+	std::vector<Flock*>::iterator endFlock = m_container.flocks.end();
 		
-	std::vector<Boid*>::iterator currentLocalBoid = boids.begin();
-	std::vector<Boid*>::iterator endLocalBoid = boids.end();
+	std::vector<Boid*>::iterator currentLocalBoid = m_boids.begin();
+	std::vector<Boid*>::iterator endLocalBoid = m_boids.end();
 
 	
-	if(rank != 0)
+	if(m_rank != 0)
 	{
 		for(; otherFlock != endFlock; ++otherFlock)
 		{
-			// check for flockID is unnecessary as no flock will have a rank less than its own but it is included for completeness.
-			if((*otherFlock)->rank < rank && ((*otherFlock)->flockID != flockID && !(*otherFlock)->boids.empty()))  
+			// check for m_id is unnecessary as no flock will have a rank less than its own but it is included for completeness.
+			if((*otherFlock)->m_rank < m_rank && ((*otherFlock)->m_id != m_id && !(*otherFlock)->m_boids.empty()))  
 			{
 	
 				// Create a copy of the current boid vector so that
 				// elements can be deleted as needed.
 				std::vector<Boid*> dummyBoids;
-				dummyBoids.assign((*otherFlock)->boids.begin(), (*otherFlock)->boids.end());
+				dummyBoids.assign((*otherFlock)->m_boids.begin(), (*otherFlock)->m_boids.end());
 				
 				// Set iterators
 				std::vector<Boid*>::iterator currentBoid;
@@ -677,8 +655,8 @@ void Flock::Hunt()
 	
 				int numPrey = 1;
 				
-				if((*otherFlock)->numMembers < numPrey)
-					numPrey = (*otherFlock)->numMembers;
+				if((*otherFlock)->m_numMembers < numPrey)
+					numPrey = (*otherFlock)->m_numMembers;
 				
 				// Cycle through the flock once for each neighbour you wish to find
 				for(int i=0; i<numPrey; ++i)
@@ -689,7 +667,7 @@ void Flock::Hunt()
 			
 					// Set minDistance initial value to the distance of the first boid
 					// in the vector simply as a starting point. 
-					distVec = (*currentBoid)->Pos - flockCentre;
+					distVec = (*currentBoid)->pos() - m_flockCentre;
 					distance = distVec.length();
 				
 					float minDistance = distance;
@@ -699,7 +677,7 @@ void Flock::Hunt()
 					while(currentBoid != endBoid)
 					{
 						// Find distance to the flock mate
-						distVec = (*currentBoid)->Pos - flockCentre;
+						distVec = (*currentBoid)->pos() - m_flockCentre;
 						distance = distVec.length();
 			
 						// If that distance is less than the minDistance 
@@ -733,24 +711,24 @@ void Flock::Hunt()
 				// Cycle
 				for(; currentBoid != endBoid; ++currentBoid)
 				{
-					AveragePreyPos = AveragePreyPos + (*currentBoid)->Pos;
+					AveragePreyPos = AveragePreyPos + (*currentBoid)->pos();
 					++count;
 				}
 				
 				
 				AveragePreyPos = AveragePreyPos / count;
 							
-				currentLocalBoid = boids.begin();
+				currentLocalBoid = m_boids.begin();
 			
 				for(; currentLocalBoid != endLocalBoid; ++currentLocalBoid)
 				{
 					// Accelerate each boid towards the prey
-					Accelerate = AveragePreyPos - (*currentLocalBoid)->Pos;
+					Accelerate = AveragePreyPos - (*currentLocalBoid)->pos();
 			
-					Accelerate = Accelerate * scaleHunt;
-					Clamp(Accelerate, maxHunt);
+					Accelerate = Accelerate * m_behaviour.hunt.scale;
+					Clamp(Accelerate, m_behaviour.hunt.max);
 			
-					(*currentLocalBoid)->Acc = (*currentLocalBoid)->Acc + Accelerate;
+					(*currentLocalBoid)->accelerate( Accelerate );
 			
 				}
 			}
@@ -768,35 +746,35 @@ void Flock::Hunt()
 void Flock::Kill()
 {
 
-	std::vector<Flock*>::iterator otherFlock = container->flocks.begin();
-	std::vector<Flock*>::iterator endFlock = container->flocks.end();
+	std::vector<Flock*>::iterator otherFlock = m_container.flocks.begin();
+	std::vector<Flock*>::iterator endFlock = m_container.flocks.end();
 
 	std::vector<Boid*>::iterator otherBoid;
 	std::vector<Boid*>::iterator endBoid;
 		
-	std::vector<Boid*>::iterator currentLocalBoid = boids.begin();
-	std::vector<Boid*>::iterator endLocalBoid = boids.end();
+	std::vector<Boid*>::iterator currentLocalBoid = m_boids.begin();
+	std::vector<Boid*>::iterator endLocalBoid = m_boids.end();
 
 	Imath::V3f difference;
 	float distance;
 	
-	if(rank != 0)
+	if(m_rank != 0)
 	{			
 		for(; otherFlock != endFlock; ++otherFlock)
 		{
-			// check for flockID is unnecessary as no flock will have a rank less than its own but it is included for completeness.
-			if((*otherFlock)->rank < rank && ((*otherFlock)->flockID != flockID && !(*otherFlock)->boids.empty()))  
+			// check for m_id is unnecessary as no flock will have a m_rank less than its own but it is included for completeness.
+			if((*otherFlock)->m_rank < m_rank && ((*otherFlock)->m_id != m_id && !(*otherFlock)->m_boids.empty()))  
 			{
 				// cycle through all boids in current flock
 				for(; currentLocalBoid != endLocalBoid; ++currentLocalBoid)
 				{
-					otherBoid = (*otherFlock)->boids.begin();
-					endBoid = (*otherFlock)->boids.end();
+					otherBoid = (*otherFlock)->m_boids.begin();
+					endBoid = (*otherFlock)->m_boids.end();
 					
 					// cycle through all boids in other flocks
 					while(otherBoid != endBoid)
 					{
-						difference = (*currentLocalBoid)->Pos - (*otherBoid)->Pos;
+						difference = (*currentLocalBoid)->pos() - (*otherBoid)->pos();
 						distance = difference.length();
 						
 						// Test is see if predator and prey boids are close.
@@ -805,13 +783,13 @@ void Flock::Kill()
 							// Create a shower of particles at boid death position
 							for(int i=0; i <30; ++i)
 							{
-								Particle* newParticle = new Particle((*otherBoid)->Pos, (*otherFlock)->colour, container->minY);
-								particles.push_back(newParticle);
+								Particle* newParticle = new Particle((*otherBoid)->pos(), (*otherFlock)->m_colour, m_container.minY);
+								m_particles.push_back(newParticle);
 							}
 							// remove dead boid from its flock 
-							(*otherFlock)->boids.erase(otherBoid);
-							(*otherFlock)->numMembers -= 1;
-							endBoid = (*otherFlock)->boids.end();
+							(*otherFlock)->m_boids.erase(otherBoid);
+							(*otherFlock)->m_numMembers -= 1;
+							endBoid = (*otherFlock)->m_boids.end();
 						} else {
 							// only increment is nothing is removed from vector
 							++otherBoid;
@@ -819,7 +797,7 @@ void Flock::Kill()
 					}
 				}
 				
-				currentLocalBoid = boids.begin();
+				currentLocalBoid = m_boids.begin();
 			}
 		}
 	}
@@ -833,42 +811,42 @@ void Flock::Kill()
 */
 void Flock::Flee()
 {
-	std::vector<Flock*>::iterator otherFlock = container->flocks.begin();
-	std::vector<Flock*>::iterator endFlock = container->flocks.end();
+	std::vector<Flock*>::iterator otherFlock = m_container.flocks.begin();
+	std::vector<Flock*>::iterator endFlock = m_container.flocks.end();
 	
 	std::vector<Boid*>::iterator otherBoid;
 	std::vector<Boid*>::iterator endBoid;
 	
-	std::vector<Boid*>::iterator currentLocalBoid = boids.begin();
-	std::vector<Boid*>::iterator endLocalBoid = boids.end();
+	std::vector<Boid*>::iterator currentLocalBoid = m_boids.begin();
+	std::vector<Boid*>::iterator endLocalBoid = m_boids.end();
 	
 	Imath::V3f distVec;
 	float distance;
 
 	Imath::V3f Accelerate;
-	Accelerate = Null;
+	Accelerate = m_null;
 	
 	int count = 0;
 
 	for(; otherFlock != endFlock; ++otherFlock)
 	{
-		// check for flockID is unnecessary as no flock will have a rank greater than its own but it is included for completeness. 
-		if((*otherFlock)->rank > rank && ((*otherFlock)->flockID != flockID && !(*otherFlock)->boids.empty())) 
+		// check for m_id is unnecessary as no flock will have a m_rank greater than its own but it is included for completeness. 
+		if((*otherFlock)->m_rank > m_rank && ((*otherFlock)->m_id != m_id && !(*otherFlock)->m_boids.empty())) 
 		{
 			// Cycle through all the boids.
 			for(; currentLocalBoid != endLocalBoid; ++currentLocalBoid)
 			{
-				otherBoid = (*otherFlock)->boids.begin();
-				endBoid = (*otherFlock)->boids.end();
+				otherBoid = (*otherFlock)->m_boids.begin();
+				endBoid = (*otherFlock)->m_boids.end();
 				
 				// For each boid cycle through all the boids
 				for(; otherBoid != endBoid; ++otherBoid)
 				{
-						distVec =  (*currentLocalBoid)->Pos - (*otherBoid)->Pos;
+						distVec =  (*currentLocalBoid)->pos() - (*otherBoid)->pos();
 						distance = distVec.length();
 						
 						// Check to see if distance to otherBoid is within test radius BoidTR.
-						if(distance < fleeTR)
+						if( distance < m_fleeTR )
 						{
 							// Create an acceleration proportional to the distance to the otherBoid.
 							Accelerate = Accelerate + (distVec / (distance * distance));
@@ -876,14 +854,14 @@ void Flock::Flee()
 						}
 				}
 		
-				Accelerate = Accelerate * scaleFlee;
+				Accelerate = Accelerate * m_behaviour.flee.scale;
 				// Clamp it off if it is too high.
-				Clamp(Accelerate, maxFlee);
+				Clamp(Accelerate, m_behaviour.flee.max);
 		
 				// Add it to the boid's current acceleration.
-				(*currentLocalBoid)->Acc = (*currentLocalBoid)->Acc + Accelerate;
+				(*currentLocalBoid)->accelerate( Accelerate );
 		
-				Accelerate = Null;
+				Accelerate = m_null;
 			}
 		}
 	} 
@@ -897,29 +875,39 @@ void Flock::Flee()
 */
 void Flock::Contain()
 {
-	std::vector<Boid*>::iterator currentBoid = boids.begin();
-	std::vector<Boid*>::iterator endBoid = boids.end();
+	std::vector<Boid*>::iterator currentBoid = m_boids.begin();
+	std::vector<Boid*>::iterator endBoid = m_boids.end();
 
 	// Cycle through all the boids in the flock.
 	while(currentBoid != endBoid)
 	{
 		// test to see if boid is out of bounds then accelerate back into world if necessary
-		if((*currentBoid)->Pos.x > container->maxX)
-			(*currentBoid)->Acc.x = (*currentBoid)->Acc.x - containmentAcc * ((*currentBoid)->Pos.x - container->maxX); 
-		else if((*currentBoid)->Pos.x < container->minX)
-			(*currentBoid)->Acc.x = (*currentBoid)->Acc.x - containmentAcc * ((*currentBoid)->Pos.x - container->minX);
-		else if((*currentBoid)->Pos.y > container->maxY)
-			(*currentBoid)->Acc.y = (*currentBoid)->Acc.y - containmentAcc * ((*currentBoid)->Pos.y - container->maxY);
+		if((*currentBoid)->pos().x > m_container.maxX)
+			(*currentBoid)->accelerate(
+					Imath::V3f( - m_containmentAcc * ((*currentBoid)->pos().x - m_container.maxX), 0.0f, 0.0f )
+					); 
+		else if((*currentBoid)->pos().x < m_container.minX)
+			(*currentBoid)->accelerate(
+					Imath::V3f( - m_containmentAcc * ((*currentBoid)->pos().x - m_container.minX), 0.0f, 0.0f )
+					);
+		else if((*currentBoid)->pos().y > m_container.maxY)
+			(*currentBoid)->accelerate(
+					Imath::V3f( 0.0f, - m_containmentAcc * ((*currentBoid)->pos().y - m_container.maxY), 0.0f )
+					);
 			
 		// accelerate any boid that's close to the ground upwards
-		else if((*currentBoid)->Pos.y < container->minY + 5)
+		else if((*currentBoid)->pos().y < m_container.minY + 5)
 		{
-			(*currentBoid)->Acc.y = (*currentBoid)->Acc.y + containmentAcc;
+			(*currentBoid)->accelerate( Imath::V3f( 0.0f, m_containmentAcc, 0.0f ) );
 		}
-		else if((*currentBoid)->Pos.z > container->maxZ)
-			(*currentBoid)->Acc.z = (*currentBoid)->Acc.z - containmentAcc * ((*currentBoid)->Pos.z - container->maxZ);
-		else if((*currentBoid)->Pos.z < container->minZ)
-			(*currentBoid)->Acc.z = (*currentBoid)->Acc.z - containmentAcc * ((*currentBoid)->Pos.z - container->minZ);
+		else if((*currentBoid)->pos().z > m_container.maxZ)
+			(*currentBoid)->accelerate(
+					Imath::V3f( 0.0f, 0.0f, - m_containmentAcc * ((*currentBoid)->pos().z - m_container.maxZ ) )
+					);
+		else if((*currentBoid)->pos().z < m_container.minZ)
+			(*currentBoid)->accelerate( 
+					Imath::V3f( 0.0f, 0.0f, - m_containmentAcc * ((*currentBoid)->pos().z - m_container.minZ) )
+					);
 		
 		++currentBoid;
 	}
@@ -932,7 +920,7 @@ void Flock::Contain()
 */
 void Flock::Clear()
 {
-	boids.clear();
+	m_boids.clear();
 }
 
 /* AddBoid:
@@ -942,7 +930,7 @@ void Flock::Clear()
 */
 void Flock::AddBoid(Boid* addBoid)
 {
-	boids.push_back(addBoid);
+	m_boids.push_back(addBoid);
 }
 
 /* ParticleUpdate:
@@ -952,17 +940,17 @@ void Flock::AddBoid(Boid* addBoid)
 */
 void Flock::ParticleUpdate()
 {
-	std::vector<Particle*>::iterator currentPart = particles.begin();
-	std::vector<Particle*>::iterator endPart = particles.end();
+	std::vector<Particle*>::iterator currentPart = m_particles.begin();
+	std::vector<Particle*>::iterator endPart = m_particles.end();
 	
 	while(currentPart != endPart)
 	{
 		// test to see if particle is below ground level of world, if so delete it.
-		if((*currentPart)->Pos.y < container->minY)
+		if((*currentPart)->Pos.y < m_container.minY)
 		{
 			delete (*currentPart);
-			particles.erase(currentPart);
-			endPart = particles.end();
+			m_particles.erase(currentPart);
+			endPart = m_particles.end();
 		}
 		else
 		{
@@ -984,7 +972,7 @@ void Flock::Update(Imath::V3f &target)
 	ParticleUpdate();
 	
 	// Check flock isn't empty (ie. already hunted to extinction)
-	if(boids.empty()) { return; }
+	if(m_boids.empty()) { return; }
 	
 	Kill(); // kill any boids before they're processed
 
@@ -1005,86 +993,14 @@ void Flock::Update(Imath::V3f &target)
 	
 
 	// Update
-	
-	std::vector<Boid*>::iterator currentBoid = boids.begin();
-	std::vector<Boid*>::iterator endBoid = boids.end();
+	std::vector<Boid*>::iterator currentBoid = m_boids.begin();
+	std::vector<Boid*>::iterator endBoid = m_boids.end();
 
 	float Vx, Vy, Vz;
 
-	for(;currentBoid != endBoid; ++currentBoid)
+	for( ; currentBoid != endBoid; ++currentBoid )
 	{
-		float preClampAcc = (*currentBoid)->Acc.length();
-	
-		Clamp((*currentBoid)->Acc, maxAcc);
-
-		// Increment velocity by acceleration
-		(*currentBoid)->Vel = (*currentBoid)->Vel + (*currentBoid)->Acc*0.04;
-
-		Clamp((*currentBoid)->Vel, maxVel);
-
-		// lower bound clamp on velocity.
-		if((*currentBoid)->Vel.length() < minVel)
-		{
-			(*currentBoid)->Vel.normalize();
-			(*currentBoid)->Vel = (*currentBoid)->Vel * minVel;
-		}
-
-		// increment position by velocity
-		(*currentBoid)->Pos = (*currentBoid)->Pos + (*currentBoid)->Vel*0.04;
-
-
-		
-		Vx = (*currentBoid)->Vel.x;
-		Vy = (*currentBoid)->Vel.y;
-		Vz = (*currentBoid)->Vel.z;
-		
-		// Pitch
-		(*currentBoid)->Dir.x = -atan(Vy/sqrt(Vx*Vx + Vz*Vz));
-
-		// Yaw - Working
-		(*currentBoid)->Dir.y = atan2(Vx, Vz);
-		
-		// Roll
-		Imath::V3f Up(0.0, 1.0, 0.0);
-		
-// 		// calculate local xAxis for boid
-		Imath::V3f xAxis = (*currentBoid)->Vel.cross(Up);  
-		xAxis.normalize();
-		
-		float totalAcc = maxLocalFC + maxGlobalFC + maxGoalFC + maxCA + maxOA + maxVM + maxHunt + maxFlee;
-		
-		float AccWeight = preClampAcc/totalAcc;
-
-		Imath::V3f AccNorm = (*currentBoid)->Acc;
-		float tilt = xAxis.dot(AccNorm);
-		tilt = bScale * tilt * AccWeight * maxAcc;
-		
-		// Save roll in roll vector
-		(*currentBoid)->oldRoll.insert((*currentBoid)->oldRoll.begin(), tilt);
-		
-		// remove last roll if necessary
-		if((*currentBoid)->oldRoll.size() > bDepth)
-			(*currentBoid)->oldRoll.pop_back();
-		
-
-		std::vector<float>::iterator currentRoll = (*currentBoid)->oldRoll.begin();
-		std::vector<float>::iterator endRoll = (*currentBoid)->oldRoll.end();
-
-		int count = 0;
-		float Roll = 0;
-		
-		// Average over the last 'n' rolls
-		for(; currentRoll != endRoll; ++currentRoll)
-		{
-			Roll = Roll + (*currentRoll);
-			++count;
-		}
-
-		Roll = Roll / count;
-		
-		(*currentBoid)->Dir.z = -atan2(Roll, -9.8);
-
-		(*currentBoid)->Acc = Null;
+		(*currentBoid)->update( m_behaviour );
 	}
 }
 
@@ -1096,20 +1012,20 @@ void Flock::Update(Imath::V3f &target)
 */
 void Flock::Draw()
 {
-	if(boids.empty()) { return; }
+	if(m_boids.empty()) { return; }
 
-	std::vector<Boid*>::iterator currentB = boids.begin();
-	std::vector<Boid*>::iterator endB = boids.end();
+	std::vector<Boid*>::iterator currentB = m_boids.begin();
+	std::vector<Boid*>::iterator endB = m_boids.end();
 	
 	while(currentB != endB)
 	{
-		glColor4f( colour.r, colour.b, colour.g, colour.a );// colour.Use();
-		(*currentB)->Draw(container->minY);
+		glColor4f( m_colour.r, m_colour.b, m_colour.g, m_colour.a );
+		(*currentB)->Draw(m_container.minY);
 		++currentB;
 	}
 	
-	std::vector<Particle*>::iterator currentPart = particles.begin();
-	std::vector<Particle*>::iterator endPart = particles.end();
+	std::vector<Particle*>::iterator currentPart = m_particles.begin();
+	std::vector<Particle*>::iterator endPart = m_particles.end();
 	
 	for(; currentPart != endPart; ++currentPart)
 	{
@@ -1124,21 +1040,21 @@ void Flock::OBJExport(int frame)
 {
 // 	if(boids.empty()) { return; }
 
-	std::vector<Boid*>::iterator currentB = boids.begin();
-	std::vector<Boid*>::iterator endB = boids.end();
+	std::vector<Boid*>::iterator currentB = m_boids.begin();
+	std::vector<Boid*>::iterator endB = m_boids.end();
 
 	int offset = 1;
 
 	std::ostringstream objName;
-	objName << "export/flock" << flockID << "." << std::setfill ('0') << std::setw(4) << frame << ".obj";
+	objName << "export/flock" << m_id << "." << std::setfill ('0') << std::setw(4) << frame << ".obj";
 	
 	std::ofstream OBJFile;
 	OBJFile.open(objName.str().c_str(), std::fstream::trunc);
 	
 		for(; currentB != endB; ++currentB)
 		{
-			OBJFile << "v " <<  (*currentB)->Pos.x << " " << (*currentB)->Pos.y << " " << (*currentB)->Pos.z << std::endl;
-			OBJFile << "vn " <<  (*currentB)->Vel.x << " " << (*currentB)->Vel.y << " " << (*currentB)->Vel.z << std::endl;
+			OBJFile << "v " <<  (*currentB)->pos().x << " " << (*currentB)->pos().y << " " << (*currentB)->pos().z << std::endl;
+			OBJFile << "vn " <<  (*currentB)->vel().x << " " << (*currentB)->vel().y << " " << (*currentB)->vel().z << std::endl;
 			
 			OBJFile << "f " << offset << "//" << offset << std::endl;
 		
@@ -1148,4 +1064,6 @@ void Flock::OBJExport(int frame)
 	
 	OBJFile.close();
 }
+
+} // Flock
 

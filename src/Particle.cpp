@@ -12,6 +12,8 @@
 \date 06/02/06
 */
 
+namespace Flock {
+
 // Empty Constructor
 Particle::Particle()
 {
@@ -90,3 +92,5 @@ void Particle::Draw()
 		
 	glPopMatrix();
 }
+
+} // Flock

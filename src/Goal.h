@@ -11,14 +11,16 @@
 \date 17/03/06
 */
 
+namespace Flock {
+
 class Goal
 {
 public:
 
-/*! 3-dimensional position of the goal in space */
+	/*! 3-dimensional position of the goal in space */
 	Imath::V3f Pos;
-
-/*! static 3-dimensional vector specifying the goal's velocity */
+	
+	/*! static 3-dimensional vector specifying the goal's velocity */
 	Imath::V3f Vel;
 
 /*! Curve object that the goal follows through space */
@@ -51,5 +53,7 @@ void Update();
 void Draw();
 
 };
+
+}; // Flock
 
 #endif

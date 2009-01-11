@@ -13,6 +13,8 @@
 \date 06/02/06
 */
 
+namespace Flock {
+
 /* Constructor:
 *  ------------
 *	Empty
@@ -65,3 +67,4 @@ void World::DrawGround()
 	glPopMatrix();
 }
 
+} // Flock

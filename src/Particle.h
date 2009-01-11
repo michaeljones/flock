@@ -4,6 +4,8 @@
 #include <ImathColor.h>
 
 
+namespace Flock {
+
 /*!
 \file Particle.h
 \brief contains particle information 
@@ -50,6 +52,8 @@ public:
 	/*! \brief this method draws the particle at location Pos */
 	void Draw();
 };
+
+}; // Flock
 
 #endif //end particle_h
 

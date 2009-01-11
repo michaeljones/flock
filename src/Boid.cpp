@@ -10,6 +10,7 @@
 
 #include <ImathRandom.h>
 
+
 /*!
 \file Boid.cpp
 \brief contains methods for the boid class
@@ -18,34 +19,120 @@
 \date 06/02/06
 */
 
+namespace Flock {
+
 /* Constructor:
 *  ---------------------
 *	Sets default values for the boids
 */
-Boid::Boid(int bID, int fID,  double x, double y, double z, double spread)
+Boid::Boid( unsigned bID, int fID,  double x, double y, double z, double spread)
+ :	m_id( bID ),
+	m_flock_id( fID )
 {
-	boidID = bID;
-	flockID = fID;
-
 	Imath::Rand48 rand( bID );
 
 	// Create a spread of positions around an average
-	Pos.x = x + rand.nextf(-1.0, 1.0) * spread/2;
-	Pos.y = y + rand.nextf(-1.0, 1.0) * spread/2;
-	Pos.z = z + rand.nextf(-1.0, 1.0) * spread/2;
+	m_pos.x = x + rand.nextf(-1.0, 1.0) * spread/2;
+	m_pos.y = y + rand.nextf(-1.0, 1.0) * spread/2;
+	m_pos.z = z + rand.nextf(-1.0, 1.0) * spread/2;
 
 	// Create a spread of velocities
 	// Vel.setValue(RandomPosNum(5) - 2.5, RandomPosNum(5) - 2.5, RandomPosNum(5) - 2.5, 0);
-	Vel.setValue( 1, 1, 1 );
+	m_vel.setValue( rand.nextf( -2.5, 2.5 ), rand.nextf( -2.5, 2.5 ), rand.nextf( -2.5, 2.5 ) );
 	
 	// Pitch
-	Dir.x = -atan(Vel.y/sqrt(Vel.x*Vel.x + Vel.z*Vel.z));
+	m_dir.x = -atan(m_vel.y/sqrt(m_vel.x*m_vel.x + m_vel.z*m_vel.z));
 
 	// Yaw 
-	Dir.y = atan2(Vel.x, Vel.z);
-	
+	m_dir.y = atan2(m_vel.x, m_vel.z);
+
 	// Zero the inital acceleration
-	Acc.setValue(0.0, 0.0, 0.0 );
+	m_acc.setValue(0.0, 0.0, 0.0 );
+}
+
+void Clamp( Imath::V3f &value, float maxValue) 
+{
+	if( value.length() > maxValue )	
+	{
+		value.normalize();
+		value = value * maxValue;
+	}
+}
+
+void Boid::update( const Flock::Behaviour& behaviour )
+{
+	float preClampAcc = m_acc.length();
+
+	Clamp(m_acc, behaviour.maxAcc);
+
+	// Increment velocity by acceleration
+	m_vel = m_vel + m_acc*0.04;
+
+	Clamp(m_vel, behaviour.maxVel);
+
+	// lower bound clamp on velocity.
+	if(m_vel.length() < behaviour.minVel)
+	{
+		m_vel.normalize();
+		m_vel *= behaviour.minVel;
+	}
+
+	// increment position by velocity
+	m_pos += m_vel*0.04;
+	
+	float vx = m_vel.x;
+	float vy = m_vel.y;
+	float vz = m_vel.z;
+	
+	// Pitch
+	m_dir.x = -atan(vy/sqrt(vx*vx + vz*vz));
+
+	// Yaw - Working
+	m_dir.y = atan2(vx, vz);
+	
+	// Roll
+	Imath::V3f up(0.0, 1.0, 0.0);
+	
+	// calculate local xAxis for boid
+	Imath::V3f xAxis = m_vel.cross(up);  
+	xAxis.normalize();
+	
+	float totalAcc = behaviour.localFC.max + behaviour.globalFC.max + behaviour.goalFC.max
+		+ behaviour.collisionAvoidance.max + behaviour.objectAvoidance.max
+		+ behaviour.velocityMatching.max + behaviour.hunt.max + behaviour.flee.max;
+	
+	float AccWeight = preClampAcc/totalAcc;
+
+	Imath::V3f AccNorm = m_acc;
+	float tilt = xAxis.dot(AccNorm);
+	tilt = behaviour.bankingScale * tilt * AccWeight * behaviour.maxAcc;
+	
+	// Save roll in roll vector
+	m_old_roll.insert(m_old_roll.begin(), tilt);
+	
+	// remove last roll if necessary
+	if( m_old_roll.size() > behaviour.bankingDepth )
+		m_old_roll.pop_back();
+	
+
+	std::vector<float>::iterator currentRoll = m_old_roll.begin();
+	std::vector<float>::iterator endRoll = m_old_roll.end();
+
+	int count = 0;
+	float roll = 0;
+	
+	// Average over the last 'n' rolls
+	for( ; currentRoll != endRoll; ++currentRoll )
+	{
+		roll = roll + (*currentRoll);
+		++count;
+	}
+
+	roll = roll / count;
+	
+	m_dir.z = -atan2(roll, -9.8);
+
+	m_acc.setValue( 0.0f, 0.0f, 0.0f );
 }
 
 /* Draw:
@@ -54,7 +141,7 @@ Boid::Boid(int bID, int fID,  double x, double y, double z, double spread)
 */
 void Boid::Draw(float floorHeight) const
 {
-	float Pitch, Yaw, Roll;
+	float pitch, yaw, roll;
 	
 	// Draw boid
 	
@@ -62,17 +149,17 @@ void Boid::Draw(float floorHeight) const
 	
 		// translate to the particle position
 		// Pos.Translate();
-		glTranslatef( Pos.x, Pos.y, Pos.z );
+		glTranslatef( m_pos.x, m_pos.y, m_pos.z );
 		
 		// Convert from radians to degrees
-		Pitch = Dir.x * 57.295779524;
-		Yaw = Dir.y * 57.295779524;
-		Roll = Dir.z * 57.295779524;
+		pitch = m_dir.x * 57.295779524;
+		yaw = m_dir.y * 57.295779524;
+		roll = m_dir.z * 57.295779524;
 	
 		// Rotate the boid appropriately 
-		glRotatef(Pitch, 1.0, 0.0, 0.0);
-		glRotatef(Yaw, 0.0, cos(Dir.x), -sin(Dir.x));
-		glRotatef(Roll, 0.0, 0.0, 1.0);
+		glRotatef(pitch, 1.0, 0.0, 0.0);
+		glRotatef(yaw, 0.0, cos(m_dir.x), - sin(m_dir.x));
+		glRotatef(roll, 0.0, 0.0, 1.0);
 		
 		glScalef(1.0, 0.3, 0.3);
 		glutSolidCone(0.5, 1, 4, 1);
@@ -87,16 +174,16 @@ void Boid::Draw(float floorHeight) const
 	glPushMatrix();
 	
 		// translate to the particle position
-		glTranslatef(Pos.x, floorHeight+0.1, Pos.z);
+		glTranslatef(m_pos.x, floorHeight+0.1, m_pos.z);
 		
 		// Rotate shadow
-		glRotatef(Yaw, 0.0, 1.0, 0.0);
+		glRotatef(yaw, 0.0, 1.0, 0.0);
 		
-		Pitch = fabs(0.5 + (Dir.x * 57.295779524/90.0)/2);
-		Yaw = Dir.y * 57.295779524/180.0;
+		pitch = fabs(0.5 + (m_dir.x * 57.295779524/90.0)/2);
+		yaw = m_dir.y * 57.295779524/180.0;
 		
 		// Scale it a little with the pitch
-		glScalef(1, 1, Pitch);
+		glScalef(1, 1, pitch);
 		
 		// Draw a basic triangle
 		glBegin(GL_TRIANGLE_FAN);
@@ -107,3 +194,6 @@ void Boid::Draw(float floorHeight) const
 		
 	glPopMatrix();
 }
+
+} // Flock
+

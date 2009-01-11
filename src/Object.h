@@ -3,6 +3,10 @@
 
 #include "World.h"
 
+#include <ImathVec.h>
+
+namespace Flock {
+
 /*!
 \file Object.h
 \brief contains obstacle information for a flock 
@@ -16,16 +20,7 @@ class World;
 class Object
 {
 public:
-	
-	/*! 3-dimensional position of the object in space */
-	Imath::V3f Pos;
-	
-	/*! static 3-dimensional vector specifying the object's velocity */
-	Imath::V3f Vel;
-	
-	/*! World pointer to the world containing the object */
-	World *container;
-	
+
 	/*! \brief this constructor method creates a object at position (x, y, z) with a pointer to the world 
 		\param theContainer - the reference of the world object 
 		\param x - the x co-ordinate of the object within the world
@@ -46,6 +41,20 @@ public:
 		this method draws a white sphere at the current object position */
 	void Draw();
 
+	const Imath::V3f& pos() { return m_pos; };
+
+private:
+
+	/*! 3-dimensional position of the object in space */
+	Imath::V3f m_pos;
+	
+	/*! static 3-dimensional vector specifying the object's velocity */
+	Imath::V3f m_vel;
+	
+	/*! World pointer to the world containing the object */
+	World *m_container;
 };
+
+}; // Flock
 
 #endif

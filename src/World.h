@@ -12,6 +12,8 @@
 \date 17/03/06
 */
 
+namespace Flock {
+
 class Flock;
 class Object;
 
@@ -48,5 +50,7 @@ void AddFlock(Flock* addFlock);
 	\param addObject - a pointer to the object that is to be added to the world */
 void AddObject(Object* addObject);
 };
+
+}; // Flock
 
 #endif

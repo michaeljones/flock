@@ -13,6 +13,8 @@
 \date 06/02/06
 */
 
+namespace Flock {
+
 /* Constructor:
 *  ------------
 *	Sets default values for the goal
@@ -81,3 +83,5 @@ void Goal::Draw()
 		glutSolidSphere(0.5, 3, 3);
 	glPopMatrix();
 }
+
+} // Flock

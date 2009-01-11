@@ -3,10 +3,8 @@
 
 #include <vector>
 
-#include "Boid.h"
 #include "World.h"
 #include "Object.h"
-#include "Particle.h"
 
 #include <ImathVec.h>
 #include <ImathColor.h>
@@ -19,95 +17,16 @@
 \date 17/03/06
 */
 
+namespace Flock {
+
 class World;
+class Boid;
+class Particle;
 
 class Flock 
 {
 public:
-	/*! Integer ID for the flock */
-	int flockID;
-	
-	/*! Colour object for colour of the boids in the flock */
-	Imath::Color4< float > colour;
-	
-	/*! Integer value for the number of boids in the flock */
-	int numMembers;
-	
-	/*! Integer value relating to the position of the flock within the local foodchain */
-	int rank;
-	
-	/*! Integer value for the number of time steps that the boids' banking is smoothed over */
-	unsigned int bDepth;
-	
-	/*! Floating point scale factor for the boid's bncking */
-	float bScale;
-	
-	/*! Scale factor and max value for local flock centring acceleration */
-	float scaleLocalFC, maxLocalFC;
-	
-	/*! Scale factor and max value for global flock centring acceleration */
-	float scaleGlobalFC, maxGlobalFC;
-	
-	/*! Scale factor and max value for goal flock centring acceleration */
-	float scaleGoalFC, maxGoalFC;
-	
-	/*! Scale factor and max value for collision avoidance acceleration */
-	float scaleCA, maxCA;
-	
-	/*! Scale factor and max value for velocity matching acceleration */
-	float scaleVM, maxVM;
-	
-	/*! Scale factor and max value for object aviodance acceleration */
-	float scaleOA, maxOA;
-	
-	/*! Scale factor and max value for hunting acceleration */
-	float scaleHunt, maxHunt;
-	
-	/*! Scale factor and max value for fleeing aviodance acceleration */
-	float scaleFlee, maxFlee;
-	
-	/*! Maximum boid velocity in the flock */
-	float maxVel;
-	
-	/*! Minimum boid velocity in the flock */
-	float minVel;
-	
-	/*! Maximum total boid acceleration in the flock */
-	float maxAcc;
-	
-	/*! 3d point with co-ordinates of the flock centre. Recalculated at every time step */
-	Imath::V3f flockCentre;
-	
-	/*! Default Null vector for reseting other vector easily */
-	Imath::V3f Null;
-	
-	/*! 3d vector specifying the gravitational down direction */
-	Imath::V3f gravity;
-	
-	/*! Test radius for boid-object interactions */
-	float objectTR;
-	
-	/*! Test radius for boid-boid interactions */
-	float boidTR;
-	
-	/*! Test radius for hunter-prey interactions */
-	float fleeTR;
-	
-	/*! Acceleration to apply when the boids stray out of the bounds of the world */
-	float containmentAcc;
-	
-	/*! STL vector with pointers to all the boids in the flock */
-	std::vector<Boid*> boids;
-	
-	/*! STL vector with pointers to all the particles created by the boids killing other boids */
-	std::vector<Particle*> particles;
-	
-	/*! World pointer to the world containing the flock */
-	World *container;
-	
-	/*! Default empty constructor for the class */
-	Flock();
-	
+
 	/*! \brief this constructor method creates a flock with ID fID and a pointer to the world 
 		\param fID - the flock ID for the flock being created
 		\param theContainer - the reference of the world object */
@@ -184,6 +103,124 @@ public:
 	
 	void OBJExport(int frame);
 
+
+	struct Property
+	{
+		Property( float s, float m ) : scale( s ), max( m ) {};
+
+		float scale;
+		float max;
+	};
+
+	struct Behaviour
+	{
+		Behaviour( float scale, float max )
+		 :	maxVel( 5.0f ),
+			minVel( 0.0f ),
+			maxAcc( 1.0f ),
+			localFC( scale, max ),
+			globalFC( scale, max ),
+			goalFC( scale, max ),
+			collisionAvoidance( scale, max ),
+			objectAvoidance( scale, max ),
+			velocityMatching( scale, max ),
+			hunt( scale, max ),
+			flee( scale, max ),
+			bankingDepth( 3 ),
+			bankingScale( 2 )
+		{
+
+		}
+
+		/*! Scale factor and max value for local flock centring acceleration */
+		Property localFC;
+		
+		/*! Scale factor and max value for global flock centring acceleration */
+		Property globalFC;
+		
+		/*! Scale factor and max value for goal flock centring acceleration */
+		Property goalFC;
+		
+		/*! Scale factor and max value for collision avoidance acceleration */
+		Property collisionAvoidance;
+
+		/*! Scale factor and max value for object aviodance acceleration */
+		Property objectAvoidance;
+		
+		/*! Scale factor and max value for velocity matching acceleration */
+		Property velocityMatching;
+		
+		/*! Scale factor and max value for hunting acceleration */
+		Property hunt;
+		
+		/*! Scale factor and max value for fleeing aviodance acceleration */
+		Property flee;
+		
+		/*! Maximum boid velocity in the flock */
+		float maxVel;
+		
+		/*! Minimum boid velocity in the flock */
+		float minVel;
+		
+		/*! Maximum total boid acceleration in the flock */
+		float maxAcc;
+
+		/*! Integer value for the number of time steps that the boids' banking is smoothed over */
+		unsigned int bankingDepth;
+		
+		/*! Floating point scale factor for the boid's banking */
+		float bankingScale;
+	
+	};
+
+
+private:
+
+	/*! Integer ID for the flock */
+	int m_id;
+	
+	/*! Colour object for colour of the boids in the flock */
+	Imath::Color4< float > m_colour;
+	
+	/*! Integer value for the number of boids in the flock */
+	int m_numMembers;
+	
+	/*! Integer value relating to the position of the flock within the local foodchain */
+	int m_rank;
+
+	Behaviour m_behaviour;
+
+	/*! 3d point with co-ordinates of the flock centre. Recalculated at every time step */
+	Imath::V3f m_flockCentre;
+	
+	/*! Default Null vector for reseting other vector easily */
+	Imath::V3f m_null;
+	
+	/*! 3d vector specifying the gravitational down direction */
+	Imath::V3f m_gravity;
+	
+	/*! Test radius for boid-object interactions */
+	float m_objectTR;
+
+	/*! Test radius for boid-boid interactions */
+	float m_boidTR;
+	
+	/*! Test radius for hunter-prey interactions */
+	float m_fleeTR;
+	
+	/*! Acceleration to apply when the boids stray out of the bounds of the world */
+	float m_containmentAcc;
+	
+	/*! STL vector with pointers to all the boids in the flock */
+	std::vector<Boid*> m_boids;
+	
+	/*! STL vector with pointers to all the particles created by the boids killing other boids */
+	std::vector<Particle*> m_particles;
+	
+	/*! World pointer to the world containing the flock */
+	World& m_container;
 };
+
+}; // Flock
 
 #endif

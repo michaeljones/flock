@@ -1,0 +1,23 @@
+
+env = Environment()
+
+sources = Split("""
+            ../src/Boid.cpp
+            ../src/Flock.cpp
+            ../src/Goal.cpp
+            ../src/Object.cpp
+            ../src/Particle.cpp
+            ../src/World.cpp
+            """)
+
+# object_list = env.Object( source = sources )
+
+env.AppendUnique( LIBPATH=["/home/mike/projects/tools/lib", "/usr/lib"] )
+
+env.AppendUnique( LIBS = "-lGL -lGLU -lglut -lstdc++ -lImath" )
+
+env.AppendUnique( CPPPATH = ["/home/mike/projects/tools/include/OpenEXR", "../src"] )
+
+env.StaticLibrary( target = 'flock', source = sources )
+
+
